@@ -59,6 +59,7 @@ type HTTPRequest struct {
 func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	var r HTTPRequest
 	var err error
+	var parse_err[] error
 	matches := haproxyRegex.FindStringSubmatch(s)
 	if len(matches) < 8 {
 		return r, errors.New("input not matching regex")
@@ -67,11 +68,11 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	r.ClientIP = matches[2]
 	
 	ui16_cp, err :=  strconv.ParseUint(matches[3],10,16)
-	if err != nil { return r, err }
+	parse_err = append (parse_err,err)
 	r.ClientPort = uint16(ui16_cp)
 	
 	ts, err := decodeTs(matches[4])
-	if err != nil { return r, err }
+	parse_err = append (parse_err,err)
 	r.TS = ts.UnixNano()
 
 	r.FrontendName = matches[5]
@@ -86,27 +87,31 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	r.ServerName = matches[8]
 	
 	r.RequestHeaderDurationMs , err =  strconv.Atoi(matches[9])
-	if err != nil { return r, err }
+	parse_err = append (parse_err,err)
 
 	r.QueueDurationMs , err =  strconv.Atoi(matches[10])
-	if err != nil { return r, err }
+	parse_err = append (parse_err,err)
 
 	r.ServerConnDurationMs , err =  strconv.Atoi(matches[11])
-	if err != nil { return r, err }
+	parse_err = append (parse_err,err)
 
 	r.ResponseHeaderDurationMs , err =  strconv.Atoi(matches[12])
-	if err != nil { return r, err }
+	parse_err = append (parse_err,err)
 
 	r.TotalDurationMs , err =  strconv.Atoi(matches[13])
 
 	ui16_sc, err :=  strconv.ParseUint(matches[14],10,16)
-	if err != nil { return r, err }
+	parse_err = append (parse_err,err)
 	r.StatusCode = uint16(ui16_sc)
 
 	ui64_br, err :=  strconv.ParseUint(matches[15],10,64)
-	if err != nil { return r, err }
+	parse_err = append (parse_err,err)
 	r.BytesRead = uint64(ui64_br)
-
+	for _,element := range parse_err {
+		if element != nil {
+			return r, element
+		}
+	}
 	return r, err
 }
 

@@ -50,6 +50,10 @@ func TestLogParsing(t *testing.T) {
 		_, err := DecodeHTTPLog("23ej87thfdsg623gtr")
 		So(err, ShouldNotEqual, nil)
 	})
+	Convey("Log - parseError - too big int", t, func() {
+		_, err := DecodeHTTPLog(`<158>Jul 23 13:49:13 haproxy[1234]: 83.3.255.169:61059 [23/Jul/2015:13:49:11.933] front1_foobar~ backend_foobar-ssl/app3-backend 1294/0/1/52/1348 1000000 1140 - - --VN 1637/7/5/6/0 0/0 "POST /query/q/Sql HTTP/1.1"`)
+		So(err, ShouldNotEqual, nil)
+	})
 	Convey("Log - POST with SSL", t, func() {
 		Convey("TS", func() {
 			So(decoded.TS, ShouldEqual, uint64(1437659351933000000))
@@ -84,4 +88,13 @@ func TestLogParsing(t *testing.T) {
 		
 
 	})
+}
+
+
+func BenchmarkParser(b *testing.B) {
+	s := `<158>Jul 23 13:49:13 haproxy[11446]: 83.3.255.169:61059 [23/Jul/2015:13:49:11.933] front1_foobar~ backend_foobar-ssl/app3-backend 1294/0/1/52/1348 200 1140 - - --VN 1637/7/5/6/0 0/0 "POST /query/q/Sql HTTP/1.1"`
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_, _ = DecodeHTTPLog(s)
+	}
 }
