@@ -11,11 +11,13 @@ const haproxyTimeFormat = "02/Jan/2006:15:04:05.000"
 type HTTPRequest struct {
 	TS                      int64             `json:"ts_ms"`
 	PID                     int               `json:"pid"` // necessary to distinguish conns hitting different processes
+	ClientSSL               bool              `json:"client_ssl"`
 	ClientIP                string            `json:"client_ip"`
 	ClientPort              uint16            `json:"client_port"`
 	FrontendName            string            `json:"frontend_name"`
 	BackendName             string            `json:"backend_name"`
-	StatusCode              uint8             `json:"status_code"`
+	ServerName              string            `json:"server_name"`
+	StatusCode              uint16            `json:"status_code"`
 	BytesRead               uint64            `json:"bytes_read"`
 	CapturedRequestCookie   map[string]string `json:"captured_request_cookie"`
 	CapturedResponseCookie  map[string]string `json:"captured_response_cookie"`
