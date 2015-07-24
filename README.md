@@ -1,7 +1,7 @@
-This is a template for Go app with gom-managed deps
+[![godoc](http://img.shields.io/badge/godoc-reference-blue.svg?style=flat)](https://godoc.org/github.com/efigence/go-haproxy)
+
+Various HAProxy-related helpers. So far:
+
+* parsing HTTP log from syslog format (WiP)
 
 
-
-## Features
-
-* Makefile automatically generates version number from `git describe`, just add `var version string` in main section of your code to get it

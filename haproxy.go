@@ -6,7 +6,6 @@ import (
 
 const haproxyTimeFormat = "02/Jan/2006:15:04:05.000"
 
-
 // HAProxy http log format
 // https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#8.2.3
 type HTTPRequest struct {
@@ -54,7 +53,7 @@ type HTTPRequest struct {
 func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	var r HTTPRequest
 	var err error
-	ts, err :=  decodeTs(s)
+	ts, err := decodeTs(s)
 	if err != nil {
 		return r, err
 	}
@@ -63,8 +62,7 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	return r, err
 }
 
-
 func decodeTs(s string) (ts time.Time, err error) {
-	ts, err =  time.Parse(haproxyTimeFormat, s)
+	ts, err = time.Parse(haproxyTimeFormat, s)
 	return ts, err
 }
