@@ -51,14 +51,17 @@ func TestLogParsing(t *testing.T) {
 		So(err, ShouldNotEqual, nil)
 	})
 	Convey("Log - POST with SSL", t, func() {
-		 Convey("Pid", func() {
+		Convey("TS", func() {
+			So(decoded.TS, ShouldEqual, uint64(1437659351933000000))
+		})
+		Convey("Pid", func() {
 			 So(decoded.PID, ShouldEqual, int(11446))
 		 })
 		Convey("ClientIP", func() {
 			 So(decoded.ClientIP, ShouldEqual, "83.3.255.169")
 		 })
 		Convey("ClientPort", func() {
-			 So(decoded.ClientPort, ShouldEqual, "61059")
+			So(decoded.ClientPort, ShouldEqual, uint16(61059))
 		})
 		Convey("SSL", func() {
 			 So(decoded.ClientSSL, ShouldEqual, true)
