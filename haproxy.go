@@ -2,18 +2,22 @@ package haproxy
 
 import (
 	"time"
+	"regexp"
+	"strconv"
+	"errors"
 )
 
 const haproxyTimeFormat = "02/Jan/2006:15:04:05.000"
+var haproxyRegex      = regexp.MustCompile(`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)([\~]) (.+?)\/(.+?) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) (\d+) (\d+)`)
 
 // HAProxy http log format
 // https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#8.2.3
 type HTTPRequest struct {
 	TS                      int64             `json:"ts_ms"`
 	PID                     int               `json:"pid"` // necessary to distinguish conns hitting different processes
-	ClientSSL               bool              `json:"client_ssl"`
 	ClientIP                string            `json:"client_ip"`
 	ClientPort              uint16            `json:"client_port"`
+	ClientSSL               bool              `json:"client_ssl"`
 	FrontendName            string            `json:"frontend_name"`
 	BackendName             string            `json:"backend_name"`
 	ServerName              string            `json:"server_name"`
@@ -55,11 +59,53 @@ type HTTPRequest struct {
 func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	var r HTTPRequest
 	var err error
-	ts, err := decodeTs(s)
-	if err != nil {
-		return r, err
+	matches := haproxyRegex.FindStringSubmatch(s)
+	if len(matches) < 8 {
+		return r, errors.New("input not matching regex")
 	}
-	r.TS = ts.UnixNano() / 1000 / 1000
+	r.PID, err = strconv.Atoi(matches[1])
+	r.ClientIP = matches[2]
+	
+	ui16_cp, err :=  strconv.ParseUint(matches[3],10,16)
+	if err != nil { return r, err }
+	r.ClientPort = uint16(ui16_cp)
+	
+	ts, err := decodeTs(matches[4])
+	if err != nil { return r, err }
+	r.TS = ts.UnixNano()
+
+	r.FrontendName = matches[5]
+
+	if matches[6] == `~` {
+		r.ClientSSL = true
+	}
+	
+
+	r.BackendName = matches[7]
+
+	r.ServerName = matches[8]
+	
+	r.RequestHeaderDurationMs , err =  strconv.Atoi(matches[9])
+	if err != nil { return r, err }
+
+	r.QueueDurationMs , err =  strconv.Atoi(matches[10])
+	if err != nil { return r, err }
+
+	r.ServerConnDurationMs , err =  strconv.Atoi(matches[11])
+	if err != nil { return r, err }
+
+	r.ResponseHeaderDurationMs , err =  strconv.Atoi(matches[12])
+	if err != nil { return r, err }
+
+	r.TotalDurationMs , err =  strconv.Atoi(matches[13])
+
+	ui16_sc, err :=  strconv.ParseUint(matches[14],10,16)
+	if err != nil { return r, err }
+	r.StatusCode = uint16(ui16_sc)
+
+	ui64_br, err :=  strconv.ParseUint(matches[15],10,64)
+	if err != nil { return r, err }
+	r.BytesRead = uint64(ui64_br)
 
 	return r, err
 }
