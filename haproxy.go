@@ -8,7 +8,7 @@ import (
 )
 
 const haproxyTimeFormat = "02/Jan/2006:15:04:05.000"
-var haproxyRegex      = regexp.MustCompile(`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)([\~]) (.+?)\/(.+?) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) (\d+) (\d+)`)
+var haproxyRegex      = regexp.MustCompile(`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)([\~]) (.+?)\/(.+?) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) (\d+) (\d+) (\S+) (\S+) (\S)(\S)(\S)(\S) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) ([\-0-9]+)\/([\-0-9]+)(| \{.*\}) "(\S+) (\S+) (\S+)"`)
 
 // HAProxy http log format
 // https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#8.2.3
@@ -23,10 +23,10 @@ type HTTPRequest struct {
 	ServerName              string            `json:"server_name"`
 	StatusCode              uint16            `json:"status_code"`
 	BytesRead               uint64            `json:"bytes_read"`
-	CapturedRequestCookie   map[string]string `json:"captured_request_cookie"`
-	CapturedResponseCookie  map[string]string `json:"captured_response_cookie"`
-	CapturedRequestHeaders  map[string]string `json:"captured_request_headers"`
-	CapturedResponseHeaders map[string]string `json:"captured_response_headers"`
+	CapturedRequestCookie   string `json:"captured_request_cookie"`
+	CapturedResponseCookie  string `json:"captured_response_cookie"`
+	CapturedRequestHeaders  []string `json:"captured_request_headers"`
+	CapturedResponseHeaders []string `json:"captured_response_headers"`
 	// timings
 	// aborted connections are marked via -1 by haproxy
 	RequestHeaderDurationMs  int `json:"request_header_duration_ms"`  // Tq
@@ -35,8 +35,9 @@ type HTTPRequest struct {
 	ResponseHeaderDurationMs int `json:"response_header_duration_ms"` // Tr
 	TotalDurationMs          int `json:"total_duration_ms"`           // Tt
 
-	HTTPRequest string `json:"http_request"`
-	HTTPMethod  string `json:"http_method"`
+	RequestPath    string `json:"http_path"`
+	RequestMethod  string `json:"http_method"`
+	HTTPVersion    string `json:"http_version"`
 
 	// Connection state
 	TerminationReason      rune `json:"termination_reason"`
@@ -107,11 +108,17 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	ui64_br, err :=  strconv.ParseUint(matches[15],10,64)
 	parse_err = append (parse_err,err)
 	r.BytesRead = uint64(ui64_br)
+
+	r.RequestPath = matches[31]
+	r.RequestMethod = matches[30]
+	r.HTTPVersion = matches[32]
+	
 	for _,element := range parse_err {
 		if element != nil {
 			return r, element
 		}
 	}
+
 	return r, err
 }
 

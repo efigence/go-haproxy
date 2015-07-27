@@ -85,8 +85,15 @@ func TestLogParsing(t *testing.T) {
 		Convey("BytesRead", func() {
 			So(decoded.BytesRead, ShouldEqual, uint64(1140))
 		})
-		
-
+		Convey("RequestPath", func() {
+			So(decoded.RequestPath, ShouldEqual, "/query/q/Sql")
+		})
+		Convey("RequestMethod", func() {
+			So(decoded.RequestMethod, ShouldEqual, "POST")
+		})
+		Convey("HTTPVersion", func() {
+			So(decoded.HTTPVersion, ShouldEqual, "HTTP/1.1")
+		})
 	})
 }
 
