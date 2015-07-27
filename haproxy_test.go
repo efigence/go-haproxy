@@ -4,6 +4,7 @@ import (
 	"testing"
 	"fmt"
 	"os"
+	"bufio"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -11,13 +12,6 @@ var testStrings[] string
 
 
 func TestMain(m *testing.M) {
-	var err error
-	testStrings, err = readLines("t-data/haproxy_udp")
-	if err != nil {
-		fmt.Printf("Can't load haproxy logs")
-		os.Exit(255)
-	}
-	_ = testStrings
 	os.Exit(m.Run())
 }
 
@@ -96,6 +90,50 @@ func TestLogParsing(t *testing.T) {
 		})
 	})
 }
+
+func TestBulkLog(t *testing.T) {
+	// use if you have some local data you want to test it with
+	local_log_file := "t-data/haproxy_log_local"
+	log_file := "t-data/haproxy_log"
+	if _, err := os.Stat(local_log_file); err == nil {
+		log_file = local_log_file
+	}
+	f, err := os.Open(log_file)
+	if err != nil {
+		t.Errorf("Cant open log file %s:%s", log_file, err)
+		
+	}
+	scanner := bufio.NewScanner(f)
+	i := 0
+	for scanner.Scan() {
+		i++
+		s := scanner.Text()
+		tName := fmt.Sprintf("Batch: Line %d", int(i))
+		out, err := DecodeHTTPLog(s)
+		Convey(tName,t, func() {
+			Convey(tName + " parsing", func() {
+				So(err, ShouldEqual, nil)
+			})
+			Convey(tName + " TS", func() {
+				So(out.TS, ShouldBeGreaterThan, 1437153662000)
+			})
+			Convey(tName + " StatusCode", func() {
+				So(out.StatusCode, ShouldBeGreaterThan, 0)
+			})
+			Convey(tName + " Path", func() {
+				So(out.RequestPath, ShouldContainSubstring, "/")
+			})
+			Convey(tName + " HTTPVersion", func() {
+				So(out.HTTPVersion, ShouldContainSubstring, "HTTP")
+			})
+		})
+		fmt.Printf("%s", tName)
+		_ = err
+		_ = out
+		_ =tName
+	}
+}
+
 
 
 func BenchmarkParser(b *testing.B) {
