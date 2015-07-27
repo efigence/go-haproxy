@@ -91,6 +91,20 @@ func TestLogParsing(t *testing.T) {
 	})
 }
 
+func TestBadReq(t *testing.T) {
+	s := `<158>Jul 23 13:49:11 haproxy[11446]: 83.7.1.151:52174 [23/Jul/2015:13:49:06.525] front_tst-static front_tst-static/<NOSRV> -1/-1/-1/-1/5000 400 187 - - CR-- 1615/1130/0/0/0 0/0 "<BADREQ>"`
+	out, err := DecodeHTTPLog(s)
+	Convey("Log - Bad request", t, func() {
+		Convey("Should parse", func() {
+			So(err, ShouldNotEqual, nil)
+		})
+		Convey("StatusCode", func() {
+			So(out.StatusCode, ShouldBeGreaterThan, 0)
+		})
+
+	})
+}
+
 func TestBulkLog(t *testing.T) {
 	// use if you have some local data you want to test it with
 	local_log_file := "t-data/haproxy_log_local"
@@ -110,7 +124,7 @@ func TestBulkLog(t *testing.T) {
 		s := scanner.Text()
 		tName := fmt.Sprintf("Batch: Line %d", int(i))
 		out, err := DecodeHTTPLog(s)
-		Convey(tName,t, func() {
+		Convey(tName + ":" + s ,t, func() {
 			Convey(tName + " parsing", func() {
 				So(err, ShouldEqual, nil)
 			})
@@ -127,9 +141,7 @@ func TestBulkLog(t *testing.T) {
 				So(out.HTTPVersion, ShouldContainSubstring, "HTTP")
 			})
 		})
-		_ = err
-		_ = out
-		_ =tName
+
 	}
 }
 

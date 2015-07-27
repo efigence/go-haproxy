@@ -13,3 +13,7 @@ _vendor/
 *.out
 
 
+# local test data
+#
+t-data/*local
+
