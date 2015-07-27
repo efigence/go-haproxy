@@ -127,7 +127,6 @@ func TestBulkLog(t *testing.T) {
 				So(out.HTTPVersion, ShouldContainSubstring, "HTTP")
 			})
 		})
-		fmt.Printf("%s", tName)
 		_ = err
 		_ = out
 		_ =tName
