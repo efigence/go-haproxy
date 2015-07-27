@@ -11,3 +11,4 @@
 <158>Jul 23 13:49:11 haproxy[11446]: 83.3.255.169:61059 [23/Jul/2015:13:49:11.675] front11_foobar~ backend_foobar-ssl/app3-backend 213/0/0/44/258 200 8341 - - --VN 1624/7/0/0/0 0/0 "POST /query/q/loadQuote/7318 HTTP/1.1"
 <158>Jul 23 13:49:12 haproxy[11446]: 79.184.135.171:57471 [23/Jul/2015:13:49:12.353] front11_barfoo-app front13_barfoo-app/barfoo-switch 30/0/0/582/612 200 347 - - ---- 1609/476/10/10/0 0/0 "POST /rpc/userFilmRemoteService HTTP/1.1"
 <158>Jul 23 13:49:13 haproxy[11446]: 83.3.255.169:61059 [23/Jul/2015:13:49:11.933] front1_foobar~ backend_foobar-ssl/app3-backend 1294/0/1/52/1348 200 1140 - - --VN 1637/7/5/6/0 0/0 "POST /query/q/Sql HTTP/1.1"
+<158>Jul 23 13:49:11 haproxy[11446]: 183.4.123.111:52174 [23/Jul/2015:13:49:06.525] front1_foobar front1_foobar/<NOSRV> -1/-1/-1/-1/5000 400 187 - - CR-- 1615/1130/0/0/0 0/0 "<BADREQ>"
