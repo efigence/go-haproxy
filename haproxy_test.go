@@ -190,7 +190,17 @@ func TestTruncatedReq(t *testing.T) {
 	})
 }
 
-
+func TestEolGarbage(t *testing.T) {
+	
+	s := `<158>Jul 23 13:49:13 haproxy[11446]: 83.3.255.169:61059 [23/Jul/2015:13:49:11.933] front1_foobar~ backend_foobar-ssl/app3-backend 1294/0/1/52/1348 200 1140 - - --VN 1637/7/5/6/0 0/0 "POST /query/q/Sql HTTP/1.1"  
+`
+	_, err := DecodeHTTPLog(s)
+	Convey("Log - eol whitespace/newline", t, func() {
+		Convey("Should parse", func() {
+			So(err, ShouldEqual, nil)
+		})
+	})
+}
 
 func BenchmarkParser(b *testing.B) {
 	s := `<158>Jul 23 13:49:13 haproxy[11446]: 83.3.255.169:61059 [23/Jul/2015:13:49:11.933] front1_foobar~ backend_foobar-ssl/app3-backend 1294/0/1/52/1348 200 1140 - - --VN 1637/7/5/6/0 0/0 "POST /query/q/Sql HTTP/1.1"`
