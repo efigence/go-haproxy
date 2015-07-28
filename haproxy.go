@@ -13,7 +13,7 @@ const haproxyTimeFormat = "02/Jan/2006:15:04:05.000"
 var haproxyRegex      = regexp.MustCompile(`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)(|[\~]) (.+?)\/(.+?) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) (\d+) (\d+) (\S+) (\S+) (\S)(\S)(\S)(\S) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) ([\-0-9]+)\/([\-0-9]+)(| \{.*\}) (".*)$`)
 
 var reqPathRegex = regexp.MustCompile(`"(\S+) (\S+) (\S+)"`)
-var reqTooLongPathRegex = regexp.MustCompile(`"(\S+) (.*)`)
+var reqTooLongPathRegex = regexp.MustCompile(`"(\S+) (\S+)`)
 
 // HAProxy http log format
 // https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#8.2.3
@@ -133,6 +133,13 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 		r.HTTPVersion = submatches[3]
 		
 	} else {
+		// no ending " means request got truncated, just try to do what you can
+		submatches := reqTooLongPathRegex.FindStringSubmatch(matches[30])
+		r.RequestMethod = submatches[1]
+		r.RequestPath = submatches[2]
+		// pretend to know version, it probably got truncated with "
+		r.HTTPVersion = "HTTP/1.1"
+		r.Truncated = true
 	}
 	for _,element := range parse_err {
 		if element != nil {

@@ -115,6 +115,14 @@ func TestBadReq(t *testing.T) {
 	})
 }
 
+func TestInvalidReq(t *testing.T) {
+	s := `<158>Jul 23 13:49:13 haproxy[11446]: 83.3.255.169:61059 [23/Jul/2015:13:49:11.933] front1_foobar~ backend_foobar-ssl/app3-backend 1294/0/1/52/1348 200 1140 - - --VN 1637/7/5/6/0 0/0 "POST  HTTP/1.1"`
+	_, err := DecodeHTTPLog(s)
+	Convey("Bad input format", t, func() {
+		So(err, ShouldNotEqual, nil)
+	})
+}
+
 func TestBulkLog(t *testing.T) {
 	// use if you have some local data you want to test it with
 	local_log_file := "t-data/haproxy_log_local"
@@ -168,7 +176,7 @@ func TestTruncatedReq(t *testing.T) {
 			So(err, ShouldEqual, nil)
 		})
 		Convey("Truncated",func() {
-			So(out.Truncated, ShouldEqual, false)
+			So(out.Truncated, ShouldEqual, true)
 		})
 		Convey("StatusCode", func() {
 			So(out.StatusCode, ShouldBeGreaterThan, 0)
