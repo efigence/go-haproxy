@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"bufio"
+	"strings"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -36,7 +37,7 @@ func TestTS(t *testing.T) {
 
 func TestLogParsing(t *testing.T) {
 	s := `<158>Jul 23 13:49:13 haproxy[11446]: 83.3.255.169:61059 [23/Jul/2015:13:49:11.933] front1_foobar~ backend_foobar-ssl/app3-backend 1294/0/1/52/1348 200 1140 - - --VN 1637/7/5/6/0 0/0 "POST /query/q/Sql HTTP/1.1"`
-	decoded, err := DecodeHTTPLog(s)
+	out, err := DecodeHTTPLog(s)
 	if err != nil {
 		t.Errorf("cant decode log: %s", err)
 	}
@@ -50,43 +51,49 @@ func TestLogParsing(t *testing.T) {
 	})
 	Convey("Log - POST with SSL", t, func() {
 		Convey("TS", func() {
-			So(decoded.TS, ShouldEqual, uint64(1437659351933000000))
+			So(out.TS, ShouldEqual, uint64(1437659351933000000))
 		})
 		Convey("Pid", func() {
-			 So(decoded.PID, ShouldEqual, int(11446))
+			 So(out.PID, ShouldEqual, int(11446))
 		 })
 		Convey("ClientIP", func() {
-			 So(decoded.ClientIP, ShouldEqual, "83.3.255.169")
+			 So(out.ClientIP, ShouldEqual, "83.3.255.169")
 		 })
 		Convey("ClientPort", func() {
-			So(decoded.ClientPort, ShouldEqual, uint16(61059))
+			So(out.ClientPort, ShouldEqual, uint16(61059))
 		})
 		Convey("SSL", func() {
-			 So(decoded.ClientSSL, ShouldEqual, true)
+			 So(out.ClientSSL, ShouldEqual, true)
 		})
 		Convey("FrontendName", func() {
-			So(decoded.FrontendName, ShouldEqual, "front1_foobar")
+			So(out.FrontendName, ShouldEqual, "front1_foobar")
 		})
 		Convey("BackendName", func() {
-			So(decoded.BackendName, ShouldEqual, "backend_foobar-ssl")
+			So(out.BackendName, ShouldEqual, "backend_foobar-ssl")
 		})
 		Convey("ServerName", func() {
-			So(decoded.ServerName, ShouldEqual, "app3-backend")
+			So(out.ServerName, ShouldEqual, "app3-backend")
 		})
 		Convey("StatusCode", func() {
-			So(decoded.StatusCode, ShouldEqual, uint16(200))
+			So(out.StatusCode, ShouldEqual, uint16(200))
 		})
 		Convey("BytesRead", func() {
-			So(decoded.BytesRead, ShouldEqual, uint64(1140))
+			So(out.BytesRead, ShouldEqual, uint64(1140))
 		})
 		Convey("RequestPath", func() {
-			So(decoded.RequestPath, ShouldEqual, "/query/q/Sql")
+			So(out.RequestPath, ShouldEqual, "/query/q/Sql")
 		})
 		Convey("RequestMethod", func() {
-			So(decoded.RequestMethod, ShouldEqual, "POST")
+			So(out.RequestMethod, ShouldEqual, "POST")
 		})
 		Convey("HTTPVersion", func() {
-			So(decoded.HTTPVersion, ShouldEqual, "HTTP/1.1")
+			So(out.HTTPVersion, ShouldEqual, "HTTP/1.1")
+		})
+		Convey("BadReq", func() {
+			So(out.BadReq, ShouldEqual, false)
+		})
+		Convey("Truncated", func() {
+			So(out.Truncated, ShouldEqual, false)
 		})
 	})
 }
@@ -96,7 +103,10 @@ func TestBadReq(t *testing.T) {
 	out, err := DecodeHTTPLog(s)
 	Convey("Log - Bad request", t, func() {
 		Convey("Should parse", func() {
-			So(err, ShouldNotEqual, nil)
+			So(err, ShouldEqual, nil)
+		})
+		Convey("BadReq", func() {
+			So(out.BadReq, ShouldEqual, true)
 		})
 		Convey("StatusCode", func() {
 			So(out.StatusCode, ShouldBeGreaterThan, 0)
@@ -135,7 +145,11 @@ func TestBulkLog(t *testing.T) {
 				So(out.StatusCode, ShouldBeGreaterThan, 0)
 			})
 			Convey(tName + " Path", func() {
-				So(out.RequestPath, ShouldContainSubstring, "/")
+				if strings.Contains(s,"<BADREQ>") {
+					So(out.RequestPath, ShouldContainSubstring, "BADREQ")
+				} else {
+					So(out.RequestPath, ShouldContainSubstring, "/")
+				}
 			})
 			Convey(tName + " HTTPVersion", func() {
 				So(out.HTTPVersion, ShouldContainSubstring, "HTTP")
@@ -143,6 +157,29 @@ func TestBulkLog(t *testing.T) {
 		})
 
 	}
+}
+
+
+func TestTruncatedReq(t *testing.T) {
+	s := `<158>Jul 23 13:49:11 haproxy[12345]: 11174.211.190:10165 [23/Jul/2015:13:49:10.989] front1 backend-static/bl3-varnish 432/0/0/0/432 200 11429 - - ---- 1590/1125/3/2/0 0/0 "GET /gfx/11/11/11/test/111111111111111111111//S%C3%83%C6%92%C3%86%E2%80%99%C3%83%E2%80%A0%C3%A2%E2%82%AC%E2%84%A2%C3%83%C6%92%C3%A2%E2%82%AC%C2%A0%C3%83%C2%A2%C3%A2%E2%80%9A%C2%AC%C3%A2%E2%80%9E%C2%A2%C3%83%C6%92%C3%86%E2%80%99%C3%83%C2%A2%C3%A2%E2%80%9A%C2%AC%C3%82%C2%A0%C3%83%C6%92%C3%82%C2%A2%C3%83%C2%A2%C3%A2%E2%82%AC%C5%A1%C3%82%C2%AC%C3%83%C2%A2%C3%A2%E2%82%AC%C5%BE%C3%82%C2%A2%C3%83%C6%92%C3%86%E2%80%99%C3%83%E2%80%A0%C3%A2%E2%82%AC%E2%84%A2%C3%83%C6%92%C3%A2%E2%82%AC%C5%A1%C3%83%E2%80%9A%C3%82%C2%A2%C3%83%C6%92%C3%86%E2%80%99%C3%83%E2%80%9A%C3%82%C2%A2%C3%83%C6%92%C3%82%C2%A2%C3%83%C2%A2%C3%A2%E2%82%AC%C5%A1%C3%82%C2%AC%C3%83%E2%80%A6%C3%82%C2%A1%C3%83%C6%92%C3%A2%E2%82%AC%C5%A1%C3%83%E2%80%9A%C3%82%C2%AC%C3%83%C6%92%C3%86%E2%80%99%C3%83%C2%A2%C3%A2%E2%80%9A%C2%AC%C3%82%C2%A6%C3%83%C6%92%C3%A2%E2%82%AC%C5%A1%C3%83%E2%80%9A%C3%82%C2%BE%C3%83%C6%92%C3%86`
+	out, err := DecodeHTTPLog(s)
+	Convey("Log - truncated request", t, func() {
+		Convey("Should parse", func() {
+			So(err, ShouldEqual, nil)
+		})
+		Convey("Truncated",func() {
+			So(out.Truncated, ShouldEqual, false)
+		})
+		Convey("StatusCode", func() {
+			So(out.StatusCode, ShouldBeGreaterThan, 0)
+		})
+		Convey("RequestPath", func() {
+			So(out.RequestPath, ShouldContainSubstring, "11/test/11")
+		})
+		Convey("HTTPVersion" + " HTTPVersion", func() {
+			So(out.HTTPVersion, ShouldContainSubstring, "HTTP")
+		})
+	})
 }
 
 

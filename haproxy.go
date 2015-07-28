@@ -4,11 +4,16 @@ import (
 	"time"
 	"regexp"
 	"strconv"
+	"strings"
 	"errors"
+	"fmt"
 )
 
 const haproxyTimeFormat = "02/Jan/2006:15:04:05.000"
-var haproxyRegex      = regexp.MustCompile(`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)(|[\~]) (.+?)\/(.+?) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) (\d+) (\d+) (\S+) (\S+) (\S)(\S)(\S)(\S) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) ([\-0-9]+)\/([\-0-9]+)(| \{.*\}) "(\S+) (\S+) (\S+)"`)
+var haproxyRegex      = regexp.MustCompile(`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)(|[\~]) (.+?)\/(.+?) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) (\d+) (\d+) (\S+) (\S+) (\S)(\S)(\S)(\S) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) ([\-0-9]+)\/([\-0-9]+)(| \{.*\}) (".*)$`)
+
+var reqPathRegex = regexp.MustCompile(`"(\S+) (\S+) (\S+)"`)
+var reqTooLongPathRegex = regexp.MustCompile(`"(\S+) (.*)`)
 
 // HAProxy http log format
 // https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#8.2.3
@@ -53,6 +58,10 @@ type HTTPRequest struct {
 	Retries      uint `json:"retries"`
 	ServerQueue  uint `json:"server_queue"`
 	BackendQueue uint `json:"backend_queue"`
+
+	// flags
+	BadReq bool `json:"bad_request"`
+	Truncated bool `json:"truncated"`
 }
 
 // Decode haproxy UDP sender string into http request
@@ -109,10 +118,22 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	parse_err = append (parse_err,err)
 	r.BytesRead = uint64(ui64_br)
 
-	r.RequestPath = matches[31]
-	r.RequestMethod = matches[30]
-	r.HTTPVersion = matches[32]
-	
+	if matches[30] == `"<BADREQ>"` {
+		r.RequestMethod = "ERR"
+		r.RequestPath = "<BADREQ>"
+		r.HTTPVersion = "HTTP/0.0"
+		r.BadReq = true
+	} else if strings.HasSuffix(matches[30], `"`) {
+		submatches := reqPathRegex.FindStringSubmatch(matches[30])
+		if len(submatches) < 4 {
+			return r, errors.New(fmt.Sprintf("Not enough matches in subfield [%s]", matches[30]))
+		}
+		r.RequestMethod = submatches[1]
+		r.RequestPath = submatches[2]
+		r.HTTPVersion = submatches[3]
+		
+	} else {
+	}
 	for _,element := range parse_err {
 		if element != nil {
 			return r, element
