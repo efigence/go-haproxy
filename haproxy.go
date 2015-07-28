@@ -10,7 +10,7 @@ import (
 )
 
 const haproxyTimeFormat = "02/Jan/2006:15:04:05.000"
-var haproxyRegex      = regexp.MustCompile(`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)(|[\~]) (.+?)\/(.+?) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) (\d+) (\d+) (\S+) (\S+) (\S)(\S)(\S)(\S) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) ([\-0-9]+)\/([\-0-9]+)(| \{.*\}) (".*)([\n|\s]*?)$`)
+var haproxyRegex      = regexp.MustCompile(`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)(|[\~]) (.+?)\/(.+?) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) ([\-0-9]+) ([\-0-9]+) (\S+) (\S+) (\S)(\S)(\S)(\S) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) ([\-0-9]+)\/([\-0-9]+)(| \{.*\}) (".*)([\n|\s]*?)$`)
 
 var reqPathRegex = regexp.MustCompile(`"(\S+) (\S+) (\S+)"`)
 var reqTooLongPathRegex = regexp.MustCompile(`"(\S+) (\S+)`)
@@ -26,7 +26,7 @@ type HTTPRequest struct {
 	FrontendName            string            `json:"frontend_name"`
 	BackendName             string            `json:"backend_name"`
 	ServerName              string            `json:"server_name"`
-	StatusCode              uint16            `json:"status_code"`
+	StatusCode              int16            `json:"status_code"`
 	BytesRead               uint64            `json:"bytes_read"`
 	CapturedRequestCookie   string `json:"captured_request_cookie"`
 	CapturedResponseCookie  string `json:"captured_response_cookie"`
@@ -110,9 +110,9 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 
 	r.TotalDurationMs , err =  strconv.Atoi(matches[13])
 
-	ui16_sc, err :=  strconv.ParseUint(matches[14],10,16)
+	i16_sc, err :=  strconv.ParseInt(matches[14],10,16)
 	parse_err = append (parse_err,err)
-	r.StatusCode = uint16(ui16_sc)
+	r.StatusCode = int16(i16_sc)
 
 	ui64_br, err :=  strconv.ParseUint(matches[15],10,64)
 	parse_err = append (parse_err,err)

@@ -75,7 +75,7 @@ func TestLogParsing(t *testing.T) {
 			So(out.ServerName, ShouldEqual, "app3-backend")
 		})
 		Convey("StatusCode", func() {
-			So(out.StatusCode, ShouldEqual, uint16(200))
+			So(out.StatusCode, ShouldEqual, int16(200))
 		})
 		Convey("BytesRead", func() {
 			So(out.BytesRead, ShouldEqual, uint64(1140))
@@ -150,7 +150,7 @@ func TestBulkLog(t *testing.T) {
 				So(out.TS, ShouldBeGreaterThan, 1437153662000)
 			})
 			Convey(tName + " StatusCode", func() {
-				So(out.StatusCode, ShouldBeGreaterThan, 0)
+				So(out.StatusCode, ShouldNotEqual, 0)
 			})
 			Convey(tName + " Path", func() {
 				if strings.Contains(s,"<BADREQ>") {
