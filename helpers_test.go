@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 )
+
 // test helpers
 
 func readLines(path string) ([]string, error) {
@@ -12,7 +13,7 @@ func readLines(path string) ([]string, error) {
 		return nil, err
 	}
 	defer file.Close()
-	
+
 	var lines []string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -20,5 +21,3 @@ func readLines(path string) ([]string, error) {
 	}
 	return lines, scanner.Err()
 }
-
- 

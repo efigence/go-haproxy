@@ -1,21 +1,19 @@
 package haproxy
 
 import (
-	"testing"
-	"fmt"
-	"os"
 	"bufio"
-	"strings"
+	"fmt"
 	. "github.com/smartystreets/goconvey/convey"
+	"os"
+	"strings"
+	"testing"
 )
 
-var testStrings[] string
-
+var testStrings []string
 
 func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
-
 
 func TestTS(t *testing.T) {
 	var err error
@@ -54,16 +52,16 @@ func TestLogParsing(t *testing.T) {
 			So(out.TS, ShouldEqual, uint64(1437659351933000000))
 		})
 		Convey("Pid", func() {
-			 So(out.PID, ShouldEqual, int(11446))
-		 })
+			So(out.PID, ShouldEqual, int(11446))
+		})
 		Convey("ClientIP", func() {
-			 So(out.ClientIP, ShouldEqual, "83.3.255.169")
-		 })
+			So(out.ClientIP, ShouldEqual, "83.3.255.169")
+		})
 		Convey("ClientPort", func() {
 			So(out.ClientPort, ShouldEqual, uint16(61059))
 		})
 		Convey("SSL", func() {
-			 So(out.ClientSSL, ShouldEqual, true)
+			So(out.ClientSSL, ShouldEqual, true)
 		})
 		Convey("FrontendName", func() {
 			So(out.FrontendName, ShouldEqual, "front1_foobar")
@@ -133,7 +131,7 @@ func TestBulkLog(t *testing.T) {
 	f, err := os.Open(log_file)
 	if err != nil {
 		t.Errorf("Cant open log file %s:%s", log_file, err)
-		
+
 	}
 	scanner := bufio.NewScanner(f)
 	i := 0
@@ -142,31 +140,30 @@ func TestBulkLog(t *testing.T) {
 		s := scanner.Text()
 		tName := fmt.Sprintf("Batch: Line %d", int(i))
 		out, err := DecodeHTTPLog(s)
-		Convey(tName + ":" + s ,t, func() {
-			Convey(tName + " parsing", func() {
+		Convey(tName+":"+s, t, func() {
+			Convey(tName+" parsing", func() {
 				So(err, ShouldEqual, nil)
 			})
-			Convey(tName + " TS", func() {
+			Convey(tName+" TS", func() {
 				So(out.TS, ShouldBeGreaterThan, 1437153662000)
 			})
-			Convey(tName + " StatusCode", func() {
+			Convey(tName+" StatusCode", func() {
 				So(out.StatusCode, ShouldNotEqual, 0)
 			})
-			Convey(tName + " Path", func() {
-				if strings.Contains(s,"<BADREQ>") {
+			Convey(tName+" Path", func() {
+				if strings.Contains(s, "<BADREQ>") {
 					So(out.RequestPath, ShouldContainSubstring, "BADREQ")
 				} else {
 					So(out.RequestPath, ShouldContainSubstring, "/")
 				}
 			})
-			Convey(tName + " HTTPVersion", func() {
+			Convey(tName+" HTTPVersion", func() {
 				So(out.HTTPVersion, ShouldContainSubstring, "HTTP")
 			})
 		})
 
 	}
 }
-
 
 func TestTruncatedReq(t *testing.T) {
 	s := `<158>Jul 23 13:49:11 haproxy[12345]: 11174.211.190:10165 [23/Jul/2015:13:49:10.989] front1 backend-static/bl3-varnish 432/0/0/0/432 200 11429 - - ---- 1590/1125/3/2/0 0/0 "GET /gfx/11/11/11/test/111111111111111111111//S%C3%83%C6%92%C3%86%E2%80%99%C3%83%E2%80%A0%C3%A2%E2%82%AC%E2%84%A2%C3%83%C6%92%C3%A2%E2%82%AC%C2%A0%C3%83%C2%A2%C3%A2%E2%80%9A%C2%AC%C3%A2%E2%80%9E%C2%A2%C3%83%C6%92%C3%86%E2%80%99%C3%83%C2%A2%C3%A2%E2%80%9A%C2%AC%C3%82%C2%A0%C3%83%C6%92%C3%82%C2%A2%C3%83%C2%A2%C3%A2%E2%82%AC%C5%A1%C3%82%C2%AC%C3%83%C2%A2%C3%A2%E2%82%AC%C5%BE%C3%82%C2%A2%C3%83%C6%92%C3%86%E2%80%99%C3%83%E2%80%A0%C3%A2%E2%82%AC%E2%84%A2%C3%83%C6%92%C3%A2%E2%82%AC%C5%A1%C3%83%E2%80%9A%C3%82%C2%A2%C3%83%C6%92%C3%86%E2%80%99%C3%83%E2%80%9A%C3%82%C2%A2%C3%83%C6%92%C3%82%C2%A2%C3%83%C2%A2%C3%A2%E2%82%AC%C5%A1%C3%82%C2%AC%C3%83%E2%80%A6%C3%82%C2%A1%C3%83%C6%92%C3%A2%E2%82%AC%C5%A1%C3%83%E2%80%9A%C3%82%C2%AC%C3%83%C6%92%C3%86%E2%80%99%C3%83%C2%A2%C3%A2%E2%80%9A%C2%AC%C3%82%C2%A6%C3%83%C6%92%C3%A2%E2%82%AC%C5%A1%C3%83%E2%80%9A%C3%82%C2%BE%C3%83%C6%92%C3%86`
@@ -175,7 +172,7 @@ func TestTruncatedReq(t *testing.T) {
 		Convey("Should parse", func() {
 			So(err, ShouldEqual, nil)
 		})
-		Convey("Truncated",func() {
+		Convey("Truncated", func() {
 			So(out.Truncated, ShouldEqual, true)
 		})
 		Convey("StatusCode", func() {
@@ -184,14 +181,14 @@ func TestTruncatedReq(t *testing.T) {
 		Convey("RequestPath", func() {
 			So(out.RequestPath, ShouldContainSubstring, "11/test/11")
 		})
-		Convey("HTTPVersion" + " HTTPVersion", func() {
+		Convey("HTTPVersion"+" HTTPVersion", func() {
 			So(out.HTTPVersion, ShouldContainSubstring, "HTTP")
 		})
 	})
 }
 
 func TestEolGarbage(t *testing.T) {
-	
+
 	s := `<158>Jul 23 13:49:13 haproxy[11446]: 83.3.255.169:61059 [23/Jul/2015:13:49:11.933] front1_foobar~ backend_foobar-ssl/app3-backend 1294/0/1/52/1348 200 1140 - - --VN 1637/7/5/6/0 0/0 "POST /query/q/Sql HTTP/1.1"  
 `
 	_, err := DecodeHTTPLog(s)

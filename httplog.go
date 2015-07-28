@@ -1,16 +1,19 @@
 package haproxy
 
 import (
-	"time"
+	"errors"
+	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
-	"errors"
-	"fmt"
+	"time"
 )
 
 const haproxyTimeFormat = "02/Jan/2006:15:04:05.000"
-var haproxyRegex      = regexp.MustCompile(`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)(|[\~]) (.+?)\/(.+?) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) ([\-0-9]+) ([\-0-9]+) (\S+) (\S+) (\S)(\S)(\S)(\S) ([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+)\/([\-0-9]+) ([\-0-9]+)\/([\-0-9]+)(| \{.*\}) (".*)([\n|\s]*?)$`)
+
+// Haproxy log line regexp (shitty go fmt doesnt allow for breaking line ;/)
+var haproxyRegex = regexp.MustCompile(
+	`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)(|[\~]) (.+?)\/(.+?) ([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+) ([\-\d]+) ([\-\d]+) (\S+) (\S+) (\S)(\S)(\S)(\S) ([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+) ([\-\d]+)\/([\-\d]+)(| \{.*\}) (".*)([\n|\s]*?)$`)
 
 var reqPathRegex = regexp.MustCompile(`"(\S+) (\S+) (\S+)"`)
 var reqTooLongPathRegex = regexp.MustCompile(`"(\S+) (\S+)`)
@@ -18,18 +21,18 @@ var reqTooLongPathRegex = regexp.MustCompile(`"(\S+) (\S+)`)
 // HAProxy http log format
 // https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#8.2.3
 type HTTPRequest struct {
-	TS                      int64             `json:"ts_ms"`
-	PID                     int               `json:"pid"` // necessary to distinguish conns hitting different processes
-	ClientIP                string            `json:"client_ip"`
-	ClientPort              uint16            `json:"client_port"`
-	ClientSSL               bool              `json:"client_ssl"`
-	FrontendName            string            `json:"frontend_name"`
-	BackendName             string            `json:"backend_name"`
-	ServerName              string            `json:"server_name"`
-	StatusCode              int16            `json:"status_code"`
-	BytesRead               uint64            `json:"bytes_read"`
-	CapturedRequestCookie   string `json:"captured_request_cookie"`
-	CapturedResponseCookie  string `json:"captured_response_cookie"`
+	TS                      int64    `json:"ts_ms"`
+	PID                     int      `json:"pid"` // necessary to distinguish conns hitting different processes
+	ClientIP                string   `json:"client_ip"`
+	ClientPort              uint16   `json:"client_port"`
+	ClientSSL               bool     `json:"client_ssl"`
+	FrontendName            string   `json:"frontend_name"`
+	BackendName             string   `json:"backend_name"`
+	ServerName              string   `json:"server_name"`
+	StatusCode              int16    `json:"status_code"`
+	BytesRead               uint64   `json:"bytes_read"`
+	CapturedRequestCookie   string   `json:"captured_request_cookie"`
+	CapturedResponseCookie  string   `json:"captured_response_cookie"`
 	CapturedRequestHeaders  []string `json:"captured_request_headers"`
 	CapturedResponseHeaders []string `json:"captured_response_headers"`
 	// timings
@@ -40,9 +43,9 @@ type HTTPRequest struct {
 	ResponseHeaderDurationMs int `json:"response_header_duration_ms"` // Tr
 	TotalDurationMs          int `json:"total_duration_ms"`           // Tt
 
-	RequestPath    string `json:"http_path"`
-	RequestMethod  string `json:"http_method"`
-	HTTPVersion    string `json:"http_version"`
+	RequestPath   string `json:"http_path"`
+	RequestMethod string `json:"http_method"`
+	HTTPVersion   string `json:"http_version"`
 
 	// Connection state
 	TerminationReason      rune `json:"termination_reason"`
@@ -60,7 +63,7 @@ type HTTPRequest struct {
 	BackendQueue uint `json:"backend_queue"`
 
 	// flags
-	BadReq bool `json:"bad_request"`
+	BadReq    bool `json:"bad_request"`
 	Truncated bool `json:"truncated"`
 }
 
@@ -69,20 +72,20 @@ type HTTPRequest struct {
 func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	var r HTTPRequest
 	var err error
-	var parse_err[] error
+	var parse_err []error
 	matches := haproxyRegex.FindStringSubmatch(s)
 	if len(matches) < 8 {
 		return r, errors.New("input not matching regex")
 	}
 	r.PID, err = strconv.Atoi(matches[1])
 	r.ClientIP = matches[2]
-	
-	ui16_cp, err :=  strconv.ParseUint(matches[3],10,16)
-	parse_err = append (parse_err,err)
+
+	ui16_cp, err := strconv.ParseUint(matches[3], 10, 16)
+	parse_err = append(parse_err, err)
 	r.ClientPort = uint16(ui16_cp)
-	
+
 	ts, err := decodeTs(matches[4])
-	parse_err = append (parse_err,err)
+	parse_err = append(parse_err, err)
 	r.TS = ts.UnixNano()
 
 	r.FrontendName = matches[5]
@@ -90,32 +93,31 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	if matches[6] == `~` {
 		r.ClientSSL = true
 	}
-	
 
 	r.BackendName = matches[7]
 
 	r.ServerName = matches[8]
-	
-	r.RequestHeaderDurationMs , err =  strconv.Atoi(matches[9])
-	parse_err = append (parse_err,err)
 
-	r.QueueDurationMs , err =  strconv.Atoi(matches[10])
-	parse_err = append (parse_err,err)
+	r.RequestHeaderDurationMs, err = strconv.Atoi(matches[9])
+	parse_err = append(parse_err, err)
 
-	r.ServerConnDurationMs , err =  strconv.Atoi(matches[11])
-	parse_err = append (parse_err,err)
+	r.QueueDurationMs, err = strconv.Atoi(matches[10])
+	parse_err = append(parse_err, err)
 
-	r.ResponseHeaderDurationMs , err =  strconv.Atoi(matches[12])
-	parse_err = append (parse_err,err)
+	r.ServerConnDurationMs, err = strconv.Atoi(matches[11])
+	parse_err = append(parse_err, err)
 
-	r.TotalDurationMs , err =  strconv.Atoi(matches[13])
+	r.ResponseHeaderDurationMs, err = strconv.Atoi(matches[12])
+	parse_err = append(parse_err, err)
 
-	i16_sc, err :=  strconv.ParseInt(matches[14],10,16)
-	parse_err = append (parse_err,err)
+	r.TotalDurationMs, err = strconv.Atoi(matches[13])
+
+	i16_sc, err := strconv.ParseInt(matches[14], 10, 16)
+	parse_err = append(parse_err, err)
 	r.StatusCode = int16(i16_sc)
 
-	ui64_br, err :=  strconv.ParseUint(matches[15],10,64)
-	parse_err = append (parse_err,err)
+	ui64_br, err := strconv.ParseUint(matches[15], 10, 64)
+	parse_err = append(parse_err, err)
 	r.BytesRead = uint64(ui64_br)
 
 	if matches[30] == `"<BADREQ>"` {
@@ -131,7 +133,7 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 		r.RequestMethod = submatches[1]
 		r.RequestPath = submatches[2]
 		r.HTTPVersion = submatches[3]
-		
+
 	} else {
 		// no ending " means request got truncated, just try to do what you can
 		submatches := reqTooLongPathRegex.FindStringSubmatch(matches[30])
@@ -141,7 +143,7 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 		r.HTTPVersion = "HTTP/1.1"
 		r.Truncated = true
 	}
-	for _,element := range parse_err {
+	for _, element := range parse_err {
 		if element != nil {
 			return r, element
 		}
