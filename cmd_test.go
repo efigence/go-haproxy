@@ -28,13 +28,15 @@ func TestACL(t *testing.T) {
 	Convey("List ACL entries", t, func() {
 		out, err := c.GetACL("t-data/blacklist.lst")
 		So(err, ShouldEqual, nil)
-		So(out[0], ShouldContainSubstring, "/from/file")
+		So(out["/from/file"], ShouldNotEqual, nil)
 	})
 	Convey("Add ACL", t, func() {
-		err := c.AddACL("t-data/blacklist.lst", "/bad/test1")
-		So(err, ShouldEqual, nil)
 		out, err := c.GetACL("t-data/blacklist.lst")
-		So(out[1], ShouldContainSubstring, "/bad/test1")
+		So(out["/bad/test1"], ShouldEqual, "")
+		err = c.AddACL("t-data/blacklist.lst", "/bad/test1")
+		So(err, ShouldEqual, nil)
+		out, err = c.GetACL("t-data/blacklist.lst")
+		So(out["/bad/test1"], ShouldNotEqual, "")
 	})
 
 	defer stopTestHaproxy()

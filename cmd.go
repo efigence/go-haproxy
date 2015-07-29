@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"fmt"
 	"net"
+	"strings"
 )
 
 // HAProxy socket interface
@@ -28,11 +29,17 @@ func (c *Conn) DelACL(acl string, id string) error {
 	var err error
 	return err
 }
-func (c *Conn) GetACL(acl string) ([]string, error) {
+func (c *Conn) GetACL(acl string) (map[string]string, error) {
 	var err error
 	out, err := c.RunCmd(fmt.Sprintf("show acl %s",acl))
-//	_, out = out[0], out[1:]
-	return out, err
+	acls := make(map[string]string)
+	for _, line := range out {
+		parts := strings.Split(line, " ")
+		if len(parts) > 1 {
+			acls[parts[1]] = parts[0]
+		}
+	}
+	return acls, err
 }
 func (c *Conn) RunCmd(cmd string) ([]string, error) {
 	conn, err := net.Dial("unix", c.socketPath)
