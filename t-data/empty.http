@@ -1,0 +1,7 @@
+HTTP/1.0 200 OK
+Cache-Control: no-cache
+Content-Type: text/html; charset=utf-8
+Pragma: NoCache
+X-Meta-Robots: noindex, nofollow
+
+<html><body></body></html>

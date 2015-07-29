@@ -11,9 +11,6 @@ import (
 
 var testStrings []string
 
-func TestMain(m *testing.M) {
-	os.Exit(m.Run())
-}
 
 func TestTS(t *testing.T) {
 	var err error
