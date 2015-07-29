@@ -21,15 +21,18 @@ func NewConnection(path string) Conn {
 
 func (c *Conn) AddACL(acl string, pattern string) error {
 	var err error
+	_, err = c.RunCmd(fmt.Sprintf("add acl %s %s\n",acl, pattern))
 	return err
 }
 func (c *Conn) DelACL(acl string, id string) error {
 	var err error
 	return err
 }
-func (c *Conn) GetACL(acl string, pattern string) error {
+func (c *Conn) GetACL(acl string) ([]string, error) {
 	var err error
-	return err
+	out, err := c.RunCmd(fmt.Sprintf("show acl %s",acl))
+//	_, out = out[0], out[1:]
+	return out, err
 }
 func (c *Conn) RunCmd(cmd string) ([]string, error) {
 	conn, err := net.Dial("unix", c.socketPath)
