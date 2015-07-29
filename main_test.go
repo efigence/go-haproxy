@@ -4,22 +4,41 @@ import (
 	"testing"
 	"os"
 	"os/exec"
-//	"fmt"
+	//	"fmt"
+	"errors"
 	"time"
 )
 var haproxy *exec.Cmd
+var socketFile = "tmp/haproxy.sock"
 func TestMain(m *testing.M) {
-	go runTestHaproxy()
-	stopTestHaproxy()
 	os.Exit(m.Run())
 }
 
-func runTestHaproxy() {
+func runTestHaproxy() error {
 	if haproxy != nil {
 		haproxy.Process.Kill()
 	}
+	// just in case
+	if _, err := os.Stat(socketFile); err == nil {
+		os.Remove(socketFile)
+	}
 	haproxy = exec.Command("haproxy", "-f", "t-data/haproxy.conf")
-	haproxy.Start()
+	runerr := haproxy.Start()
+	time.Sleep(100 * time.Millisecond)
+	if _, err := os.Stat(socketFile); err == nil {
+		return runerr
+	} 
+	time.Sleep(1000 * time.Millisecond)
+	if _, err := os.Stat(socketFile); err == nil {
+ 		return runerr
+	}
+	// is that a rPi I spy ?
+	time.Sleep(10000 * time.Millisecond)
+	if _, err := os.Stat(socketFile); err == nil {
+		return runerr
+	}
+	return errors.New("tried to start haproxy -f t-data/haproxy.conf but socket still does not exist!")
+	
 }
  
 func stopTestHaproxy() {
@@ -28,6 +47,7 @@ func stopTestHaproxy() {
 	}
 	if haproxy != nil {
 		haproxy.Process.Kill()
+		os.Remove(socketFile)
 	} else {
 		return
 	}

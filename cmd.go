@@ -15,6 +15,7 @@ type Conn struct {
 
 func NewConnection(path string) Conn {
 	var c Conn
+	c.socketPath = path
 	return c
 }
 
