@@ -9,12 +9,10 @@ func ExampleNew() {
 	ha := New("/var/run/haproxy.sock")
 	// clear all entries in ACL
 	_ = ha.ClearACL("inc/blacklist.lst")
-	// Output:
-	//
 }
 	
 
-func ExampleAddACL() {
+func ExampleConn_AddACL() {
 	// Initialize
 	ha := New("/var/run/haproxy.sock")
 
@@ -27,7 +25,7 @@ func ExampleAddACL() {
 	}
 }
 
-func ExampleDeleteACL() {
+func ExampleConn_DeleteACL() {
 	// Initialize
 	ha := New("/var/run/haproxy.sock")
 
@@ -40,7 +38,7 @@ func ExampleDeleteACL() {
 	}
 }
 
-func ExampleGetACL() {
+func ExampleConn_GetACL() {
 	// Initialize
 	ha := New("/var/run/haproxy.sock")
 
@@ -54,7 +52,7 @@ func ExampleGetACL() {
 	// /bad/path:    0x121e940
 }
 
-func ExampleClearACL() {
+func ExampleConn_ClearACL() {
 	// Initialize
 	ha := New("/var/run/haproxy.sock")
 
