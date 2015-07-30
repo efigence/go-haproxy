@@ -3,7 +3,6 @@ package haproxy
 import (
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
-	"fmt"
 )
 
 var testConn Conn
