@@ -4,6 +4,16 @@ import (
 	"fmt"
 )
 
+func ExampleNew() {
+	// start
+	ha := New("/var/run/haproxy.sock")
+	// clear all entries in ACL
+	_ = ha.ClearACL("inc/blacklist.lst")
+	// Output:
+	//
+}
+	
+
 func ExampleAddACL() {
 	// Initialize
 	ha := New("/var/run/haproxy.sock")
