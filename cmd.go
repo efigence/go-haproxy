@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"strings"
+	"errors"
 )
 
 // HAProxy socket interface
@@ -20,15 +21,40 @@ func NewConnection(path string) Conn {
 	return c
 }
 
+// Add new entry to acl
+// ACL name is either file path ( if haproxy config uses -f option to load acls from file ) or ACL id prepended with hash
 func (c *Conn) AddACL(acl string, pattern string) error {
 	var err error
-	_, err = c.RunCmd(fmt.Sprintf("add acl %s %s\n",acl, pattern))
+	out, err := c.RunCmd(fmt.Sprintf("add acl %s %s\n",acl, pattern))
+	if err != nil {
+		return err
+	}
+	if out[0] != "" {
+		return errors.New(fmt.Sprintf("error: %s", out[0]))
+	}
 	return err
 }
-func (c *Conn) DelACL(acl string, id string) error {
+
+// Delete entry from ACL
+// ID is value of map returned by GetACL
+
+func (c *Conn) DeleteACL(acl string, id string) (error) {
 	var err error
+	if  strings.ContainsAny(id, " \t\n") || id == "" {
+		return errors.New("id should not contain whitespaces or be empty as that would remove every ACL, use ClearACL for that")
+	}
+	out, err := c.RunCmd(fmt.Sprintf("del acl %s %s\n",acl, id))
+	if strings.Contains(out[0], "Key not found") {
+		return errors.New("Key not found")
+	}
 	return err
 }
+
+// Get map of all entries in ACL
+// map is value => ID for easy lookup
+// so deleting acls is just
+//     err := ha.DeleteACL( acls["/test/acl"] )
+
 func (c *Conn) GetACL(acl string) (map[string]string, error) {
 	var err error
 	out, err := c.RunCmd(fmt.Sprintf("show acl %s",acl))
@@ -41,6 +67,22 @@ func (c *Conn) GetACL(acl string) (map[string]string, error) {
 	}
 	return acls, err
 }
+func (c *Conn) ListACL(acl string) (error) {
+	var err error
+	return err
+}
+
+// Clear all entries in ACL
+func (c *Conn) ClearACL(acl string) (error) {
+	var err error
+	out, err := c.RunCmd(fmt.Sprintf("clear acl %s",acl))
+	if out[0] != "" {
+		return errors.New(fmt.Sprintf("error: %+v", out))
+	}
+	return err
+}
+
+// Run arbitrary haproxy command and return output
 func (c *Conn) RunCmd(cmd string) ([]string, error) {
 	conn, err := net.Dial("unix", c.socketPath)
 	var out []string
