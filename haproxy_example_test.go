@@ -48,8 +48,6 @@ func ExampleConn_GetACL() {
 	for k, v := range acls {
         fmt.Println(k, ":\t", v)
     }
-	// Output:
-	// /bad/path:    0x121e940
 }
 
 func ExampleConn_ClearACL() {
