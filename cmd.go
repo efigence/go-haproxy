@@ -15,7 +15,10 @@ type Conn struct {
 	socketPath string
 }
 
-func NewConnection(path string) Conn {
+
+// Setup new connection
+// accepts path to haproxy unix socket
+func New(path string) Conn {
 	var c Conn
 	c.socketPath = path
 	return c

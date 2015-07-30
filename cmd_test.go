@@ -3,6 +3,7 @@ package haproxy
 import (
 	. "github.com/smartystreets/goconvey/convey"
 	"testing"
+	"fmt"
 )
 
 var testConn Conn
@@ -14,7 +15,7 @@ func TestACL(t *testing.T) {
 	Convey("Start test haproxy", t, func() {
 		So(err, ShouldEqual, nil)
 	})
-	c := NewConnection("tmp/haproxy.sock")
+	c := New("tmp/haproxy.sock")
 	Convey("List ACL", t, func() {
 		out, err := c.RunCmd("show acl")
 		So(err, ShouldEqual, nil)
@@ -82,3 +83,51 @@ func TestACL(t *testing.T) {
 
 	defer stopTestHaproxy()
 }
+
+
+func ExampleAddACL() {
+	// Initialize
+	ha := New("/var/run/haproxy.sock")
+
+	// Get ACL entries from file in config (via -f in haproxy cfg)
+	acls, _ := ha.GetACL("inc/blacklist.lst")
+	
+	// Check if it exists and add
+	if acls["/bad/path"] == "" {
+		ha.AddACL("inc/blacklist.lst", acls["/bad/path"])
+	}
+}
+
+func ExampleDeleteACL() {
+	// Initialize
+	ha := New("/var/run/haproxy.sock")
+
+	// Get ACL entries from file in config (via -f in haproxy cfg)
+	acls, _ := ha.GetACL("inc/blacklist.lst")
+	
+	// Check if it exists and delete
+	if acls["/bad/path"] != "" {
+		ha.DeleteACL("inc/blacklist.lst", acls["/bad/path"])
+	}
+}
+
+func ExampleGetACL() {
+	// Initialize
+	ha := New("/var/run/haproxy.sock")
+
+	// Get ACL entries from file in config (via -f in haproxy cfg)
+	acls, _ := ha.GetACL("inc/blacklist.lst")
+	
+	for k, v := range acls {
+        fmt.Println(k, ":\t", v)
+    }
+}
+
+func ExampleClearACL() {
+	// Initialize
+	ha := New("/var/run/haproxy.sock")
+
+	// clear all entries in ACL
+	_ = ha.ClearACL("inc/blacklist.lst")
+}
+
