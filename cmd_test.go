@@ -45,7 +45,7 @@ func TestACL(t *testing.T) {
 		So(err, ShouldEqual, nil)
 		So(out["/bad/test2"], ShouldNotEqual, "")
 	})
-	
+
 	Convey("Delete ACL", t, func() {
 		Convey("Delete existing acl", func() {
 			_ = c.AddACL("t-data/blacklist.lst", "/bad/test1")
@@ -67,15 +67,15 @@ func TestACL(t *testing.T) {
 	Convey("Clear ACL", t, func() {
 		Convey("Clear existing file ACL", func() {
 			err := c.ClearACL("t-data/blacklist.lst")
-			So(err, ShouldEqual, nil)			
+			So(err, ShouldEqual, nil)
 		})
 		Convey("Clear ACL by ID", func() {
 			err := c.ClearACL("#1")
-			So(err, ShouldEqual, nil)			
+			So(err, ShouldEqual, nil)
 		})
 		Convey("Clear nonexisting ACL", func() {
 			err := c.ClearACL("1")
-			So(err, ShouldNotEqual, nil)			
+			So(err, ShouldNotEqual, nil)
 		})
 	})
 	Convey("List all ACLs", t, func() {
@@ -101,4 +101,3 @@ func TestACL(t *testing.T) {
 
 	defer stopTestHaproxy()
 }
-

@@ -11,7 +11,6 @@ import (
 
 var testStrings []string
 
-
 func TestTS(t *testing.T) {
 	var err error
 	ts, err := decodeTs("23/Jul/2015:13:49:11.933")

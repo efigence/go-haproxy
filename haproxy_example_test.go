@@ -10,7 +10,6 @@ func ExampleNew() {
 	// clear all entries in ACL
 	_ = ha.ClearACL("inc/blacklist.lst")
 }
-	
 
 func ExampleConn_AddACL() {
 	// Initialize
@@ -18,7 +17,7 @@ func ExampleConn_AddACL() {
 
 	// Get ACL entries from file in config (via -f in haproxy cfg)
 	acls, _ := ha.GetACL("inc/blacklist.lst")
-	
+
 	// Check if it exists and add
 	if acls["/bad/path"] == "" {
 		ha.AddACL("inc/blacklist.lst", acls["/bad/path"])
@@ -31,7 +30,7 @@ func ExampleConn_DeleteACL() {
 
 	// Get ACL entries from file in config (via -f in haproxy cfg)
 	acls, _ := ha.GetACL("inc/blacklist.lst")
-	
+
 	// Check if it exists and delete
 	if acls["/bad/path"] != "" {
 		ha.DeleteACL("inc/blacklist.lst", acls["/bad/path"])
@@ -44,10 +43,10 @@ func ExampleConn_GetACL() {
 
 	// Get ACL entries from file in config (via -f in haproxy cfg)
 	acls, _ := ha.GetACL("inc/blacklist.lst")
-	
+
 	for k, v := range acls {
-        fmt.Println(k, ":\t", v)
-    }
+		fmt.Println(k, ":\t", v)
+	}
 }
 
 func ExampleConn_ClearACL() {
@@ -57,5 +56,3 @@ func ExampleConn_ClearACL() {
 	// clear all entries in ACL
 	_ = ha.ClearACL("inc/blacklist.lst")
 }
-
- 
