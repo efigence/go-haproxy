@@ -115,6 +115,24 @@ func (c *Conn) ListACL() ([]ACL, error) {
 	return acl, err
 }
 
+func (c *Conn) ListACLFiles() (map[string]ACL, error) {
+	var err error
+	acl_list, err := c.ListACL()
+	out := make(map[string]ACL)
+	for _, acl := range acl_list {
+		if acl.Type == "file" {
+			if _, ok := out[ acl.SourceFile ]; ok {
+				// we dont want to overwrite existing entries as we are interested only in first occurence of acl
+				continue
+			} else {
+				out[ acl.SourceFile ] = acl
+			}
+		}
+	}
+	
+	return out, err
+}
+
 // Clear all entries in ACL
 func (c *Conn) ClearACL(acl string) (error) {
 	var err error

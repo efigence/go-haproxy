@@ -92,6 +92,11 @@ func TestACL(t *testing.T) {
 			So(out[1].Type, ShouldEqual, "path_beg")
 			So(out[1].Line, ShouldEqual, 19)
 		})
+		Convey("ACL by file name", func() {
+			out, err := c.ListACLFiles()
+			So(err, ShouldEqual, nil)
+			So(out["t-data/blacklist.lst"].ID, ShouldEqual, 0)
+		})
 	})
 
 	defer stopTestHaproxy()
