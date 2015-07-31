@@ -77,8 +77,22 @@ func TestACL(t *testing.T) {
 			err := c.ClearACL("1")
 			So(err, ShouldNotEqual, nil)			
 		})
-
-	})	
+	})
+	Convey("List all ACLs", t, func() {
+		out, err := c.ListACL()
+		Convey("File acl", func() {
+			So(err, ShouldEqual, nil)
+			So(out[0].ID, ShouldEqual, 0)
+			So(out[0].Type, ShouldEqual, "file")
+			So(out[0].SourceFile, ShouldEqual, "t-data/blacklist.lst")
+		})
+		Convey("Inline acl", func() {
+			So(err, ShouldEqual, nil)
+			So(out[1].ID, ShouldEqual, 1)
+			So(out[1].Type, ShouldEqual, "path_beg")
+			So(out[1].Line, ShouldEqual, 19)
+		})
+	})
 
 	defer stopTestHaproxy()
 }

@@ -8,13 +8,28 @@ import (
 	"net"
 	"strings"
 	"errors"
+	"regexp"
+	"strconv"
 )
+
+type ACL struct {
+	// haproxy-assigned ID
+	ID int `json:"id"`
+	SourceFile string `json:"source_file"`
+	Type string `json:"type"`
+	Line int `json:"line"`
+}
 
 // HAProxy socket interface
 type Conn struct {
 	socketPath string
 }
 
+// pattern for ACLs originating from config files
+var inlineACLRegex = regexp.MustCompile(`^(\d+) \((.*)\) acl '(.+)' file '(.*)' line (\d+)`)
+
+// pattern for ACLs included via -f option
+var fileACLRegex = regexp.MustCompile(`^(\d+) \((.*)\) pattern loaded from file '(.*)' used by`)
 
 // Setup new connection
 // accepts path to haproxy unix socket
@@ -32,7 +47,7 @@ func (c *Conn) AddACL(acl string, pattern string) error {
 	if err != nil {
 		return err
 	}
-	if out[0] != "" {
+	if out[0] != "" && out[0] != "Done." {
 		return errors.New(fmt.Sprintf("error: %s", out[0]))
 	}
 	return err
@@ -70,16 +85,41 @@ func (c *Conn) GetACL(acl string) (map[string]string, error) {
 	}
 	return acls, err
 }
-func (c *Conn) ListACL(acl string) (error) {
+
+func (c *Conn) ListACL() ([]ACL, error) {
 	var err error
-	return err
+	var acl []ACL
+	out, err := c.RunCmd("show acl")
+	
+	for _, line := range out {
+		var a ACL
+		matches := inlineACLRegex.FindStringSubmatch(line)
+		if len(matches) > 2 {
+			a.ID, _ = strconv.Atoi(matches[1])
+			a.Type =  matches[3]
+			a.Line,_ = strconv.Atoi(matches[5])
+			acl = append(acl, a)
+		} else {
+			matches = fileACLRegex.FindStringSubmatch(line)
+			if len(matches) > 2 {
+				a.ID, _ = strconv.Atoi(matches[1])
+				a.SourceFile = matches[2]
+				a.Type = "file"
+				acl = append(acl, a)
+			} else {
+				continue
+			}
+		}
+	}
+
+	return acl, err
 }
 
 // Clear all entries in ACL
 func (c *Conn) ClearACL(acl string) (error) {
 	var err error
 	out, err := c.RunCmd(fmt.Sprintf("clear acl %s",acl))
-	if out[0] != "" {
+	if out[0] != "" && out[0] != "Done." {
 		return errors.New(fmt.Sprintf("error: %+v", out))
 	}
 	return err
