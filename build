@@ -68,4 +68,5 @@ gom exec go test -v -coverprofile=cover.out | go-junit-report > report.xml
 sed -i -e "s#.*/\(.*\.go\)#\./\\1#" cover.out
 
 echo "Generating cover-cobertura.xml"
-gocov convert cover.out |gocov-xml >cover-cobertura.xml
+gocov convert cover.out  >cover.json
+cat cover.json |gocov-xml >cover-cobertura.xml
