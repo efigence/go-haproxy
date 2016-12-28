@@ -1,6 +1,6 @@
 ---
 language: go
-
+install: haproxy
 go:
   - 1.7.x
   - master
