@@ -1,0 +1,21 @@
+hash: c762dd299f93d96f08d101fe5cdac6eb01e7347b9c986c5c23cf06e3c3c69f39
+updated: 2017-08-31T14:21:45.012147959+02:00
+imports: []
+testImports:
+- name: github.com/gopherjs/gopherjs
+  version: f7c56533adfac99e12ccdccfec04a466d2a778da
+  subpackages:
+  - js
+- name: github.com/jtolds/gls
+  version: 77f18212c9c7edc9bd6a33d383a7b545ce62f064
+- name: github.com/smartystreets/assertions
+  version: 9c0ea8acbc1d8ad689f9e6fe0c1fa5838e0cabc2
+  subpackages:
+  - internal/go-render/render
+  - internal/oglematchers
+- name: github.com/smartystreets/goconvey
+  version: e5b2b7c9111590d019a696c7800593f666e1a7f4
+  subpackages:
+  - convey
+  - convey/reporting
+  - convey/gotest
