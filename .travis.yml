@@ -1,0 +1,15 @@
+---
+language: go
+addons:
+  apt:
+    packages:
+      - haproxy
+
+matrix:
+  include:
+    - os: linux
+      dist: trusty
+go:
+  - 1.7.x
+  - master
+
