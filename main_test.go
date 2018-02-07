@@ -1,11 +1,10 @@
 package haproxy
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"testing"
-	//	"fmt"
-	"errors"
 	"time"
 )
 
@@ -39,7 +38,8 @@ func runTestHaproxy() error {
 	if _, err := os.Stat(socketFile); err == nil {
 		return runerr
 	}
-	return errors.New("tried to start haproxy -f t-data/haproxy.conf but socket still does not exist!")
+	out, er := haproxy.CombinedOutput()
+	return fmt.Errorf("tried to start haproxy -f t-data/haproxy.conf but socket still does not exist!: %s | %s | %s", string(out), er, runerr)
 
 }
 
