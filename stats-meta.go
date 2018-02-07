@@ -1,9 +1,15 @@
 package haproxy
 
+
+
+// StatsByID defines order of fields when asking HAProxy for csv
+// ORDER MATTERS, it is used to decode csv without having to parse header on each request
+// it is also used by GenerateStatusId() to fill in StatsInfo
+// only reason to modify it is if upstream haproxy adds new stats, however you should consider
+// making a pull request instead.
 // stats description under
 // https://www.haproxy.org/download/1.7/doc/management.txt
 // new ones are always added at the end
-// ORDER MATTERS, it is used to decode csv
 var StatsById = []string{
 	"pxname",
 	"svname",
@@ -90,19 +96,32 @@ var StatsById = []string{
 	"dses",
 }
 
+
+// DataPoint describes value of stat and its metadata like which process/server it came from and which instance (haproxy subprocess when using nbproc > 1) it came from.
+// It is used because some stats need different merge function for sub-processes and for different servers.
+// For example max queue size should be summed over same machine, but not everyone will want it summed over whole cluster, preferring per-machine maximum.
+// On top of it, golang type system is too poor to deal with values that can be both strings and numbers and I dont want to have interface{} everywhere
+type DataPoint struct {
+	Server string
+	Instance int
+	Value float64
+	StringValue string
+}
+
 // function prototype to merge stats from different HAProxies.
 // in general it should ignore negative values as that is the haproxy way of indicating no data/does not apply
+
 type MergeFunction interface {
-	Merge(arg ...float64) float64
+	Merge(arg ...DataPoint) DataPoint
 }
 
 type MergeSum struct {
 }
 
-func (m *MergeSum) Merge(arg ...float64) (out float64) {
+func (m *MergeSum) Merge(arg ...DataPoint) (out DataPoint) {
 	for _, point := range arg {
-		if point > 0 {
-			out = out + point
+		if point.Value > 0 {
+			out.Value = out.Value + point.Value
 		}
 	}
 	return out
@@ -111,23 +130,50 @@ func (m *MergeSum) Merge(arg ...float64) (out float64) {
 type MergeAvg struct {
 }
 
-func (m *MergeAvg) Merge(arg ...float64) (out float64) {
+func (m *MergeAvg) Merge(arg ...DataPoint) (out DataPoint) {
 	var acc float64
 	var count int
 	for _, point := range arg {
-		if !(point < 0) {
-			acc = acc + point
+		if !(point.Value < 0) {
+			acc = acc + point.Value
 			count = count + 1
 		}
 	}
-	return acc / float64(count)
+	out.Value =  acc / float64(count)
+	return out
+}
+
+type MergeMax struct {
+	
+}
+
+func (m *MergeMax) Merge(arg ...DataPoint) (out DataPoint) {
+	out = arg[0]
+	for _, point := range arg {
+		if point.Value > out.Value { out.Value = point.Value }
+	}
+	return out
+}
+
+type MergeMin struct {
+	
+}
+// gets minimal Value while ignoreing -1 (haproxy speech for nodata)
+func (m *MergeMin) Merge(arg ...DataPoint) (out DataPoint) {
+	out = arg[0]
+	for _, point  := range arg {
+		// drop -1, that in haproxy speak means no data
+		if point.Value < 0 {continue}
+		if point.Value < out.Value { out.Value = point.Value }
+	}
+	return out
 }
 
 type StatDescription struct {
 	Id          int
 	Name        string
 	Description string
-	MergeType   *MergeFunction
+	MergeType   MergeFunction
 	// Where given stat can live: L(Listener), F(Frontend), B(Backend), S(Server)
 	Type string
 }
@@ -138,7 +184,7 @@ var StatusInfo = StatsInfo{
 	"pxname":         {Type: `LFBS`, Description: `proxy name`},
 	"svname":         {Type: `LFBS`, Description: `service name (FRONTEND for frontend, BACKEND for backend, any name for server/listener)`},
 	"qcur":           {Type: `..BS`, Description: `current queued requests. For the backend this reports the number queued without a server assigned.`},
-	"qmax":           {Type: `..BS`, Description: `max value of qcur`},
+	"qmax":           {Type: `..BS`, Description: `max Value of qcur`},
 	"scur":           {Type: `LFBS`, Description: `current sessions`},
 	"smax":           {Type: `LFBS`, Description: `max sessions`},
 	"slim":           {Type: `LFBS`, Description: `configured session limit`},
@@ -151,7 +197,7 @@ var StatusInfo = StatsInfo{
 	"econ":           {Type: `..BS`, Description: `number of requests that encountered an error trying to connect to a backend server. The backend stat is the sum of the stat for all servers of that backend, plus any connection errors not associated with a particular server (such as the backend having no active servers).`},
 	"eresp":          {Type: `..BS`, Description: `response errors. srv_abrt will be counted here also. Some other errors are: \n- write error on the client socket (won't be counted for the server stat) \n- failure applying filters to the response.`},
 	"wretr":          {Type: `..BS`, Description: `number of times a connection to a server was retried.`},
-	"wredis":         {Type: `..BS`, Description: `number of times a request was redispatched to another server. The server value counts the number of times that server was switched away from.`},
+	"wredis":         {Type: `..BS`, Description: `number of times a request was redispatched to another server. The server Value counts the number of times that server was switched away from.`},
 	"status":         {Type: `LFBS`, Description: `status (UP/DOWN/NOLB/MAINT/MAINT(via)/MAINT(resolution)...)`},
 	"weight":         {Type: `..BS`, Description: `total weight (backend), server weight (server)`},
 	"act":            {Type: `..BS`, Description: `number of active servers (backend), server is active (server)`},
@@ -159,8 +205,8 @@ var StatusInfo = StatsInfo{
 	"chkfail":        {Type: `...S`, Description: `number of failed checks. (Only counts checks failed when the server is up.)`},
 	"chkdown":        {Type: `..BS`, Description: `number of UP->DOWN transitions. The backend counter counts transitions to the whole backend being down, rather than the sum of the counters for each server.`},
 	"lastchg":        {Type: `..BS`, Description: `number of seconds since the last UP<->DOWN transition`},
-	"downtime":       {Type: `..BS`, Description: `total downtime (in seconds). The value for the backend is the downtime for the whole backend, not the sum of the server downtime.`},
-	"qlimit":         {Type: `...S`, Description: `configured maxqueue for the server, or nothing in the value is 0 (default, meaning no limit)`},
+	"downtime":       {Type: `..BS`, Description: `total downtime (in seconds). The Value for the backend is the downtime for the whole backend, not the sum of the server downtime.`},
+	"qlimit":         {Type: `...S`, Description: `configured maxqueue for the server, or nothing in the Value is 0 (default, meaning no limit)`},
 	"pid":            {Type: `LFBS`, Description: `process id (0 for first instance, 1 for second, ...)`},
 	"iid":            {Type: `LFBS`, Description: `unique proxy id`},
 	"sid":            {Type: `L..S`, Description: `server id (unique inside a proxy)`},
@@ -220,10 +266,51 @@ var StatusInfo = StatsInfo{
 	"dses":           {Type: `LF..`, Description: `requests denied by "tcp-request session" rules`},
 }
 
+// stats that should be summed up when aggregating multiple backends
+var statSum = []string{
+	"dcon",
+	"dses",
+	"qmax",
+	"smax",
+	"rate_max",
+	"req_rate_max",
+
+}
+// stuff that should be averaged out between multiple instances
+var statMax = []string{
+	"scur",
+	"smax",
+}
+
+// stuff that should be minimal value of all (like "last change")
+var statMin = []string{
+	"lastch",
+	"lastsess",
+}
+
+
+const Frontend = "F"
+const Backend = "B"
+const Listener = "L"
+const Server = "S"
+
+
 func init() {
-	//
+	// sadly there is no way to do it non-runtime without duplication.
+	GenerateStatusInfo()
+}
+
+// update status info and merge function (which stats should be averaged or summed). Normally called automatically from init.
+func GenerateStatusInfo() {
+
 	for k, v := range StatsById {
 		StatusInfo[v].Name = v
 		StatusInfo[v].Id = k
+	}
+	for _, v := range statSum {
+		StatusInfo[v].MergeType = &MergeSum{}
+	}
+	for _, v := range statMax {
+		StatusInfo[v].MergeType = &MergeMax{}
 	}
 }
