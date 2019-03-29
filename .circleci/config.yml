@@ -8,7 +8,8 @@ jobs:
     docker:
       # specify the version
       - image: circleci/golang:1.9
-
+        environment:
+          TEST_RESULTS= /tmp/test-results    
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
       # documented at https://circleci.com/docs/2.0/circleci-images/
@@ -21,7 +22,7 @@ jobs:
     working_directory: /go/src/github.com/efigence/go-haproxy
     steps:
       - checkout
-
+      - run: sudo apt install -y haproxy
       # specify any bash command here prefixed with `run: `
       - run: go get -v -t -d ./...
       - run: go test -v ./...
