@@ -1,0 +1,13 @@
+<156>Aug 12 13:18:51 haproxy[1806]: SPOE: [hauth] <EVENT:on-frontend-http-request> sid=3 st=2 -1/-1/-1/-1/0 0/0 0/0 4/4
+<158>Aug 12 13:18:51 haproxy[1806]: 127.0.0.1:34636 [12/Aug/2022:13:18:51.161] default local-static/local-81 0/0/0/0/0 200 1537 - - ---- 1/1/0/0/0 0/0 {localhost} {|} "GET / HTTP/1.1"
+<156>Aug 12 13:18:52 haproxy[1806]: SPOE: [hauth] <EVENT:on-frontend-http-request> sid=4 st=2 -1/-1/-1/-1/0 0/0 0/0 5/5
+<158>Aug 12 13:18:52 haproxy[1806]: 127.0.0.1:34652 [12/Aug/2022:13:18:52.347] default local-static/local-81 0/0/0/0/0 200 1537 - - ---- 1/1/0/0/0 0/0 {localhost} {|} "GET / HTTP/1.1"
+<156>Aug 12 13:18:53 haproxy[1806]: SPOE: [hauth] <EVENT:on-frontend-http-request> sid=5 st=2 -1/-1/-1/-1/0 0/0 0/0 6/6
+<158>Aug 12 13:18:53 haproxy[1806]: 127.0.0.1:34660 [12/Aug/2022:13:18:53.453] default local-static/local-81 0/0/0/0/0 200 1537 - - ---- 1/1/0/0/0 0/0 {localhost} {|} "GET / HTTP/1.1"
+<157>Aug 12 13:31:41 haproxy[1806]: Server local-3001/local-3001 is UP, reason: Layer7 check passed, code: 200, check duration: 0ms. 1 active and 0 backup servers online. 0 sessions requeued, 0 total in queue.
+<156>Aug 12 13:31:48 haproxy[1806]: SPOE: [hauth] <EVENT:on-frontend-http-request> sid=6 st=2 -1/-1/-1/-1/0 0/0 0/0 7/7
+<158>Aug 12 13:31:48 haproxy[1806]: 127.0.0.1:58456 [12/Aug/2022:13:31:48.242] default local-static/local-81 0/0/0/0/0 200 1537 - - ---- 1/1/0/0/0 0/0 {localhost} {|} "GET / HTTP/1.1"
+<156>Aug 12 13:31:51 haproxy[1806]: SPOE: [hauth] <EVENT:on-frontend-http-request> sid=7 st=2 -1/-1/-1/-1/0 0/0 0/0 8/8
+<158>Aug 12 13:31:51 haproxy[1806]: 127.0.0.1:58458 [12/Aug/2022:13:31:51.287] default local-static/local-81 0/0/0/0/0 200 1537 - - ---- 1/1/0/0/0 0/0 {localhost} {|} "GET / HTTP/1.1"
+<156>Aug 12 13:31:52 haproxy[1806]: SPOE: [hauth] <EVENT:on-frontend-http-request> sid=8 st=2 -1/-1/-1/-1/0 0/0 0/0 9/9
+<158>Aug 12 13:31:52 haproxy[1806]: 127.0.0.1:58460 [12/Aug/2022:13:31:52.032] default local-static/local-81 0/0/0/0/0 200 1537 - - ---- 1/1/0/0/0 0/0 {localhost} {|} "GET / HTTP/1.1"

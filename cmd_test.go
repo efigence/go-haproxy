@@ -1,7 +1,7 @@
 package haproxy
 
 import (
-	. "github.com/smartystreets/goconvey/convey"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -11,91 +11,91 @@ func TestACL(t *testing.T) {
 	// fixme generate tmpfile unix socket
 	err := runTestHaproxy()
 	defer stopTestHaproxy()
-	Convey("Start test haproxy", t, func() {
-		So(err, ShouldEqual, nil)
+	t.Run("Start test haproxy", func(t *testing.T) {
+		assert.NoError(t, err)
 	})
 	c := New("tmp/haproxy.sock")
-	Convey("List ACL", t, func() {
+	t.Run("List ACL", func(t *testing.T) {
 		out, err := c.RunCmd("show acl")
-		So(err, ShouldEqual, nil)
-		So(out[0], ShouldContainSubstring, "# id") // header
+		assert.NoError(t, err)
+		assert.Contains(t, out[0], "# id") // header
 	})
-	Convey("List all ACL", t, func() {
+	t.Run("List all ACL", func(t *testing.T) {
 		out, err := c.RunCmd("show acl")
-		So(err, ShouldEqual, nil)
-		So(out[1], ShouldContainSubstring, `blacklist.lst`)
+		assert.NoError(t, err)
+		assert.Contains(t, out[1], `blacklist.lst`)
 	})
-	Convey("List ACL entries", t, func() {
+	t.Run("List ACL entries", func(t *testing.T) {
 		out, err := c.GetACL("t-data/blacklist.lst")
-		So(err, ShouldEqual, nil)
-		So(out["/from/file"], ShouldNotEqual, nil)
+		assert.NoError(t, err)
+		assert.NotEqual(t, out["/from/file"], nil)
 	})
-	Convey("Add to existing fileACL", t, func() {
+	t.Run("Add to existing fileACL", func(t *testing.T) {
 		out, err := c.GetACL("t-data/blacklist.lst")
-		So(out["/bad/test1"], ShouldEqual, "")
+		assert.Equal(t, out["/bad/test1"], "")
 		err = c.AddACL("t-data/blacklist.lst", "/bad/test1")
-		So(err, ShouldEqual, nil)
+		assert.NoError(t, err)
 		out, err = c.GetACL("t-data/blacklist.lst")
-		So(out["/bad/test1"], ShouldNotEqual, "")
+		assert.NotEqual(t, out["/bad/test1"], "")
 	})
-	Convey("Add ACL via id", t, func() {
+	t.Run("Add ACL via id", func(t *testing.T) {
 		err = c.AddACL("#1", "/bad/test2")
-		So(err, ShouldEqual, nil)
+		assert.NoError(t, err)
 		out, err := c.GetACL("#1")
-		So(err, ShouldEqual, nil)
-		So(out["/bad/test2"], ShouldNotEqual, "")
+		assert.NoError(t, err)
+		assert.NotEqual(t, out["/bad/test2"], "")
 	})
 
-	Convey("Delete ACL", t, func() {
-		Convey("Delete existing acl", func() {
+	t.Run("Delete ACL", func(t *testing.T) {
+		t.Run("Delete existing acl", func(t *testing.T) {
 			_ = c.AddACL("t-data/blacklist.lst", "/bad/test1")
 			err = c.DeleteACL("t-data/blacklist.lst", "/bad/test1")
-			So(err, ShouldEqual, nil)
+			assert.NoError(t, err)
 			out, _ := c.GetACL("t-data/blacklist.lst")
-			So(out["/bad/test1"], ShouldEqual, "")
+			assert.Equal(t, out["/bad/test1"], "")
 		})
-		Convey("Delete nonexisting acl", func() {
+		t.Run("Delete nonexisting acl", func(t *testing.T) {
 			err = c.DeleteACL("t-data/blacklist.lst", "/bad/test1/nothing")
-			So(err, ShouldNotEqual, nil)
+			assert.Error(t, err)
 		})
 		_ = err
 	})
-	Convey("Delete with empty ID", t, func() {
+	t.Run("Delete with empty ID", func(t *testing.T) {
 		err = c.DeleteACL("t-data/blacklist.lst", "  \t")
-		So(err, ShouldNotEqual, nil)
+		assert.Error(t, err)
 	})
-	Convey("Clear ACL", t, func() {
-		Convey("Clear existing file ACL", func() {
+	t.Run("Clear ACL", func(t *testing.T) {
+		t.Run("Clear existing file ACL", func(t *testing.T) {
 			err := c.ClearACL("t-data/blacklist.lst")
-			So(err, ShouldEqual, nil)
+			assert.NoError(t, err)
 		})
-		Convey("Clear ACL by ID", func() {
+		t.Run("Clear ACL by ID", func(t *testing.T) {
 			err := c.ClearACL("#1")
-			So(err, ShouldEqual, nil)
+			assert.NoError(t, err)
 		})
-		Convey("Clear nonexisting ACL", func() {
+		t.Run("Clear nonexisting ACL", func(t *testing.T) {
 			err := c.ClearACL("1")
-			So(err, ShouldNotEqual, nil)
+			assert.Error(t, err)
 		})
 	})
-	Convey("List all ACLs", t, func() {
+	t.Run("List all ACLs", func(t *testing.T) {
 		out, err := c.ListACL()
-		Convey("File acl", func() {
-			So(err, ShouldEqual, nil)
-			So(out[0].ID, ShouldEqual, 0)
-			So(out[0].Type, ShouldEqual, "file")
-			So(out[0].SourceFile, ShouldEqual, "t-data/blacklist.lst")
+		t.Run("File acl", func(t *testing.T) {
+			assert.NoError(t, err)
+			assert.Equal(t, out[0].ID, 0)
+			assert.Equal(t, out[0].Type, "file")
+			assert.Equal(t, out[0].SourceFile, "t-data/blacklist.lst")
 		})
-		Convey("Inline acl", func() {
-			So(err, ShouldEqual, nil)
-			So(out[1].ID, ShouldEqual, 1)
-			So(out[1].Type, ShouldEqual, "path_beg")
-			So(out[1].Line, ShouldEqual, 19)
+		t.Run("Inline acl", func(t *testing.T) {
+			assert.NoError(t, err)
+			assert.Equal(t, out[1].ID, 1)
+			assert.Equal(t, out[1].Type, "path_beg")
+			assert.Equal(t, out[1].Line, 19)
 		})
-		Convey("ACL by file name", func() {
+		t.Run("ACL by file name", func(t *testing.T) {
 			out, err := c.ListACLFiles()
-			So(err, ShouldEqual, nil)
-			So(out["t-data/blacklist.lst"].ID, ShouldEqual, 0)
+			assert.NoError(t, err)
+			assert.EqualValues(t, out["t-data/blacklist.lst"].ID, 0)
 		})
 	})
 
