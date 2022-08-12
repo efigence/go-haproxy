@@ -23,7 +23,14 @@ func runTestHaproxy() error {
 	if _, err := os.Stat(socketFile); err == nil {
 		os.Remove(socketFile)
 	}
-	haproxy = exec.Command("haproxy", "-f", "t-data/haproxy.conf")
+	haproxy_bin := "haproxy"
+	if _, err := exec.LookPath("haproxy"); err != nil {
+		_, err := os.Stat("/usr/sbin/haproxy")
+		if err == nil {
+			haproxy_bin = "/usr/sbin/haproxy"
+		}
+	}
+	haproxy = exec.Command(haproxy_bin, "-f", "t-data/haproxy.conf")
 	runerr := haproxy.Start()
 	time.Sleep(100 * time.Millisecond)
 	if _, err := os.Stat(socketFile); err == nil {
@@ -39,7 +46,7 @@ func runTestHaproxy() error {
 		return runerr
 	}
 	out, er := haproxy.CombinedOutput()
-	return fmt.Errorf("tried to start haproxy -f t-data/haproxy.conf but socket still does not exist!: %s | %s | %s", string(out), er, runerr)
+	return fmt.Errorf("tried to start haproxy -f t-data/haproxy.conf but socket still does not exist!: %s | %s | %s |p:%s", string(out), er, runerr, os.Getenv("PATH"))
 
 }
 
