@@ -126,13 +126,11 @@ func (c *Conn) ListACLFiles() (map[string]ACL, error) {
 	acl_list, err := c.ListACL()
 	out := make(map[string]ACL)
 	for _, acl := range acl_list {
-		if acl.Type == "file" {
-			if _, ok := out[acl.SourceFile]; ok {
-				// we dont want to overwrite existing entries as we are interested only in first occurence of acl
-				continue
-			} else {
-				out[acl.SourceFile] = acl
-			}
+		fmt.Printf("OUT: [%+v]\n", acl)
+		// HAProxy appears to not display same file
+		// used by different ACLs, but just in case don't overwrite
+		if _, ok := out[acl.SourceFile]; acl.Type == "file" && !ok {
+			out[acl.SourceFile] = acl
 		}
 	}
 

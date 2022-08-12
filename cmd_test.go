@@ -11,6 +11,19 @@ func TestACL(t *testing.T) {
 	// fixme generate tmpfile unix socket
 	err := runTestHaproxy()
 	defer stopTestHaproxy()
+	t.Run("Start without module", func(t *testing.T) {
+		c := &Conn{}
+		// TODO fix panics
+		assert.Error(t, c.AddACL("asd", "/asd"))
+		assert.Panics(t, func() { c.DeleteACL("asd", "1") })
+		_, err := c.GetACL("asd")
+		assert.Error(t, err)
+		assert.Panics(t, func() { c.ClearACL("asd") })
+		_, err = c.ListACL()
+		assert.Error(t, err)
+		_, err = c.ListACLFiles()
+		assert.Error(t, err)
+	})
 	t.Run("Start test haproxy", func(t *testing.T) {
 		assert.NoError(t, err)
 	})
