@@ -1,4 +1,4 @@
-module github.com/efigence/go-haproxy.git
+module github.com/efigence/go-haproxy
 
 go 1.18
 

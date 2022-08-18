@@ -16,12 +16,12 @@ const (
 	TerminationNone            = `-`
 )
 const (
-	SessionRequest    = `R`
-	SessionQueue      = `Q`
-	SessionConnection = `C`
-	SessionHeaders    = `H`
-	SessionData       = `D`
-	SessionLast       = `L`
-	SessionTarpit     = `T`
-	SessionNone       = `-`
+	SessionCloseRequest    = `R`
+	SessionCloseQueue      = `Q`
+	SessionCloseConnection = `C`
+	SessionCloseHeaders    = `H`
+	SessionCloseData       = `D`
+	SessionCloseLast       = `L`
+	SessionCloseTarpit     = `T`
+	SessionCloseNone       = `-`
 )
