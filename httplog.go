@@ -119,6 +119,10 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	ui64_br, err := strconv.ParseUint(matches[15], 10, 64)
 	parse_err = append(parse_err, err)
 	r.BytesRead = uint64(ui64_br)
+	r.TerminationReason = rune(matches[18][0])
+	r.SessionCloseState = rune(matches[19][0])
+	r.ClientPersistenceState = rune(matches[20][0])
+	r.PersistenceCookieState = rune(matches[21][0])
 
 	if matches[30] == `"<BADREQ>"` {
 		r.RequestMethod = "ERR"
