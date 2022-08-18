@@ -72,6 +72,7 @@ func TestBadReq(t *testing.T) {
 		assert.Greater(t, out.StatusCode, int16(0))
 		assert.EqualValues(t, TerminationClientAbort, out.TerminationReason)
 		assert.EqualValues(t, SessionCloseRequest, out.SessionCloseState)
+		assert.Equal(t, "<NOSRV>", out.ServerName, "%+v", out)
 
 	})
 }
