@@ -70,8 +70,8 @@ func TestBadReq(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, out.BadReq)
 		assert.Greater(t, out.StatusCode, int16(0))
-		assert.EqualValues(t, TerminationClientAbort, string(out.TerminationReason))
-		assert.EqualValues(t, SessionCloseRequest, string(out.SessionCloseState))
+		assert.EqualValues(t, TerminationClientAbort, out.TerminationReason)
+		assert.EqualValues(t, SessionCloseRequest, out.SessionCloseState)
 
 	})
 }
