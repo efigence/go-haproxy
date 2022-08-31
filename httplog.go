@@ -21,7 +21,7 @@ var reqTooLongPathRegex = regexp.MustCompile(`"(\S+) (\S+)`)
 // HAProxy http log format
 // https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#8.2.3
 type HTTPRequest struct {
-	TS                      int64    `json:"ts_ms"`
+	TS                      int64    `json:"ts_us"`
 	PID                     int      `json:"pid"` // necessary to distinguish conns hitting different processes
 	ClientIP                string   `json:"client_ip"`
 	ClientPort              uint16   `json:"client_port"`
@@ -86,7 +86,7 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 
 	ts, err := decodeTs(matches[4])
 	parse_err = append(parse_err, err)
-	r.TS = ts.UnixNano()
+	r.TS = ts.UnixMicro()
 
 	r.FrontendName = matches[5]
 
@@ -159,4 +159,8 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 func decodeTs(s string) (ts time.Time, err error) {
 	ts, err = time.Parse(haproxyTimeFormat, s)
 	return ts, err
+}
+
+func (h HTTPRequest) Timestamp() time.Time {
+	return time.UnixMicro(h.TS)
 }

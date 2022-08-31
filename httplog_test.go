@@ -9,6 +9,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
 var testStrings []string
@@ -45,7 +46,8 @@ func TestLogParsing(t *testing.T) {
 	})
 	t.Run("Log - POST with SSL", func(t *testing.T) {
 		a := assert.New(t)
-		a.EqualValues(out.TS, 1437659351933000000, "ts")
+		a.EqualValues(out.TS, 1437659351933000, "ts")
+		a.EqualValues(out.Timestamp(), time.UnixMicro(1437659351933000), "ts")
 		a.EqualValues(out.PID, 11446, "pid")
 		a.Equal(out.ClientIP, "83.3.255.169", "ClientIP")
 		a.EqualValues(out.ClientPort, 61059, "ClientPort")
