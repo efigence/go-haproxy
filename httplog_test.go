@@ -15,6 +15,7 @@ import (
 var testStrings []string
 
 func TestTS(t *testing.T) {
+	HaproxyLogTimezone = time.UTC
 	var err error
 	ts, err := decodeTs("23/Jul/2015:13:49:11.933")
 	if err != nil {
@@ -33,6 +34,7 @@ func TestTS(t *testing.T) {
 }
 
 func TestLogParsing(t *testing.T) {
+	HaproxyLogTimezone = time.UTC
 	s := `<158>Jul 23 13:49:13 haproxy[11446]: 83.3.255.169:61059 [23/Jul/2015:13:49:11.933] front1_foobar~ backend_foobar-ssl/app3-backend 1294/0/1/52/1348 200 1140 - - --VN 1637/7/5/6/0 0/0 "POST /query/q/Sql HTTP/1.1"`
 	out, err := DecodeHTTPLog(s)
 	require.NoError(t, err)

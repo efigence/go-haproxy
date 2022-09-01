@@ -11,6 +11,10 @@ import (
 
 const haproxyTimeFormat = "02/Jan/2006:15:04:05.000"
 
+// HaproxyLogTimezone specifies in what timezone emitted logs are
+// defaults to local as haproxy by default uses localtime in logs
+var HaproxyLogTimezone = time.Local
+
 // Haproxy log line regexp (shitty go fmt doesnt allow for breaking line ;/)
 var haproxyRegex = regexp.MustCompile(
 	`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)(|[\~]) (.+?)\/(.+?) ([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+) ([\-\d]+) ([\-\d]+) (\S+) (\S+) (\S)(\S)(\S)(\S) ([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+) ([\-\d]+)\/([\-\d]+)(| \{.*\}) (".*)([\n|\s]*?)$`)
@@ -157,7 +161,7 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 }
 
 func decodeTs(s string) (ts time.Time, err error) {
-	ts, err = time.Parse(haproxyTimeFormat, s)
+	ts, err = time.ParseInLocation(haproxyTimeFormat, s, HaproxyLogTimezone)
 	return ts, err
 }
 
