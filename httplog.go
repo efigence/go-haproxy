@@ -18,27 +18,27 @@ var HaproxyLogTimezone = time.Local
 // Haproxy log line regexp (shitty go fmt doesnt allow for breaking line ;/)
 var haproxyRegex = regexp.MustCompile(
 	`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)(|[\~]) (.+?)\/(.+?) ([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+) ([\-\d]+) ([\-\d]+) (\S+) (\S+) (\S)(\S)(\S)(\S) ([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+) ([\-\d]+)\/([\-\d]+)(| \{.*\}) (".*)([\n|\s]*?)$`)
-
 var reqPathRegex = regexp.MustCompile(`"(\S+) (\S+) (\S+)"`)
 var reqTooLongPathRegex = regexp.MustCompile(`"(\S+) (\S+)`)
 
 // HAProxy http log format
 // https://cbonte.github.io/haproxy-dconv/configuration-1.5.html#8.2.3
 type HTTPRequest struct {
-	TS                      int64    `json:"ts_us"`
-	PID                     int      `json:"pid"` // necessary to distinguish conns hitting different processes
-	ClientIP                string   `json:"client_ip"`
-	ClientPort              uint16   `json:"client_port"`
-	ClientSSL               bool     `json:"client_ssl"`
-	FrontendName            string   `json:"frontend_name"`
-	BackendName             string   `json:"backend_name"`
-	ServerName              string   `json:"server_name"`
-	StatusCode              int16    `json:"status_code"`
-	BytesRead               uint64   `json:"bytes_read"`
-	CapturedRequestCookie   string   `json:"captured_request_cookie"`
-	CapturedResponseCookie  string   `json:"captured_response_cookie"`
-	CapturedRequestHeaders  []string `json:"captured_request_headers"`
-	CapturedResponseHeaders []string `json:"captured_response_headers"`
+	TS                     int64  `json:"ts_us"`
+	PID                    int    `json:"pid"` // necessary to distinguish conns hitting different processes
+	ClientIP               string `json:"client_ip"`
+	ClientPort             uint16 `json:"client_port"`
+	ClientSSL              bool   `json:"client_ssl"`
+	FrontendName           string `json:"frontend_name"`
+	BackendName            string `json:"backend_name"`
+	ServerName             string `json:"server_name"`
+	StatusCode             int16  `json:"status_code"`
+	BytesRead              uint64 `json:"bytes_read"`
+	CapturedRequestCookie  string `json:"captured_request_cookie"`
+	CapturedResponseCookie string `json:"captured_response_cookie"`
+	// It is not possible to distinguish between "just captured request headers" and "just captured response headers"
+	// so we let user sort it out
+	CapturedSamples string `json:"captured_samples"`
 	// timings
 	// aborted connections are marked via -1 by haproxy
 	RequestHeaderDurationMs  int `json:"request_header_duration_ms"`  // Tq
@@ -123,11 +123,13 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	ui64_br, err := strconv.ParseUint(matches[15], 10, 64)
 	parse_err = append(parse_err, err)
 	r.BytesRead = uint64(ui64_br)
+	r.CapturedRequestCookie = matches[16]
+	r.CapturedResponseCookie = matches[17]
 	r.TerminationReason = rune(matches[18][0])
 	r.SessionCloseState = rune(matches[19][0])
 	r.ClientPersistenceState = rune(matches[20][0])
 	r.PersistenceCookieState = rune(matches[21][0])
-
+	r.CapturedSamples = matches[29]
 	if matches[30] == `"<BADREQ>"` {
 		r.RequestMethod = "ERR"
 		r.RequestPath = "<BADREQ>"

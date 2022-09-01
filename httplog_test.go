@@ -87,6 +87,13 @@ func TestInvalidReq(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestCaptures(t *testing.T) {
+	s := `<158>Sep  1 17:50:37 haproxy[1866]: 127.0.0.1:52320 [01/Sep/2022:17:50:37.898] default local-3001/<NOSRV> 0/-1/-1/-1/0 503 253 - - SC-- 1/1/0/0/0 0/0 {3001.localhost} {|} "GET /slow/default HTTP/1.1"`
+	out, err := DecodeHTTPLog(s)
+	require.NoError(t, err)
+	assert.Equal(t, " {3001.localhost} {|}", out.CapturedSamples)
+}
+
 func TestBulkLog(t *testing.T) {
 	// use if you have some local data you want to test it with
 	local_log_file := "t-data/haproxy_log_local"
