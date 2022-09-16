@@ -58,6 +58,10 @@ func TestACL(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotEqual(t, out["/bad/test2"], "")
 	})
+	t.Run("Add ACL wrong data", func(t *testing.T) {
+		err = c.AddACL("!@%#&^$((()#)&^%", "@(#*&!^#@$(^!@)*#^!@")
+		assert.Error(t, err)
+	})
 
 	t.Run("Delete ACL", func(t *testing.T) {
 		t.Run("Delete existing acl", func(t *testing.T) {

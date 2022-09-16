@@ -30,9 +30,6 @@ func (i *Ingest) ingestor(conn *net.UDPConn, ch chan haproxy.HTTPRequest) {
 ```
 
 
-
-
-
 ### Quirks
 
 #### Request/response variable capture
@@ -55,8 +52,6 @@ It will be parsed on best effort basis and will have `Truncated=true` set in the
 
 HAProxy sends logs in local time, so we decode it in local time. 
 There is a global variable `HaproxyLogTimezone` that will set the zone used to decode time.
-
-
 
 ### Testing
 

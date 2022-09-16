@@ -159,8 +159,5 @@ func (c *Conn) RunCmd(cmd string) ([]string, error) {
 	for scanner.Scan() {
 		out = append(out, scanner.Text())
 	}
-	if err := scanner.Err(); err != nil {
-		return out, err
-	}
-	return out, err
+	return out, scanner.Err()
 }
