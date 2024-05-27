@@ -154,6 +154,7 @@ func (c *Conn) RunCmd(cmd string) ([]string, error) {
 	if err != nil {
 		return out, err
 	}
+	defer conn.Close()
 	fmt.Fprintf(conn, "%s\n", cmd)
 	scanner := bufio.NewScanner(conn)
 	for scanner.Scan() {

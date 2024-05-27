@@ -5,12 +5,11 @@ package haproxy
 //
 // Variable-length integer (varint) are encoded using Peers encoding:
 //
-//
-//        0  <= X < 240        : 1 byte  (7.875 bits)  [ XXXX XXXX ]
-//       240 <= X < 2288       : 2 bytes (11 bits)     [ 1111 XXXX ] [ 0XXX XXXX ]
-//      2288 <= X < 264432     : 3 bytes (18 bits)     [ 1111 XXXX ] [ 1XXX XXXX ]   [ 0XXX XXXX ]
-//    264432 <= X < 33818864   : 4 bytes (25 bits)     [ 1111 XXXX ] [ 1XXX XXXX ]*2 [ 0XXX XXXX ]
-//  33818864 <= X < 4328786160 : 5 bytes (32 bits)     [ 1111 XXXX ] [ 1XXX XXXX ]*3 [ 0XXX XXXX ]
+//	      0  <= X < 240        : 1 byte  (7.875 bits)  [ XXXX XXXX ]
+//	     240 <= X < 2288       : 2 bytes (11 bits)     [ 1111 XXXX ] [ 0XXX XXXX ]
+//	    2288 <= X < 264432     : 3 bytes (18 bits)     [ 1111 XXXX ] [ 1XXX XXXX ]   [ 0XXX XXXX ]
+//	  264432 <= X < 33818864   : 4 bytes (25 bits)     [ 1111 XXXX ] [ 1XXX XXXX ]*2 [ 0XXX XXXX ]
+//	33818864 <= X < 4328786160 : 5 bytes (32 bits)     [ 1111 XXXX ] [ 1XXX XXXX ]*3 [ 0XXX XXXX ]
 const (
 	// TYPED-DATA    : <TYPE:4 bits><FLAGS:4 bits><DATA>
 	DataTypeNULL   = 0 //<0>

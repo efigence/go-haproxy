@@ -1,7 +1,9 @@
 package haproxy
 
 import (
+	"fmt"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -65,11 +67,12 @@ func TestACL(t *testing.T) {
 
 	t.Run("Delete ACL", func(t *testing.T) {
 		t.Run("Delete existing acl", func(t *testing.T) {
-			_ = c.AddACL("t-data/blacklist.lst", "/bad/test1")
+			err = c.AddACL("t-data/blacklist.lst", "/bad/test1")
+			require.NoError(t, err)
 			err = c.DeleteACL("t-data/blacklist.lst", "/bad/test1")
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			out, _ := c.GetACL("t-data/blacklist.lst")
-			assert.Equal(t, out["/bad/test1"], "")
+			require.Equal(t, out["/bad/test1"], "")
 		})
 		t.Run("Delete nonexisting acl", func(t *testing.T) {
 			err = c.DeleteACL("t-data/blacklist.lst", "/bad/test1/nothing")
@@ -97,17 +100,18 @@ func TestACL(t *testing.T) {
 	})
 	t.Run("List all ACLs", func(t *testing.T) {
 		out, err := c.ListACL()
+		fmt.Printf("%+v", out)
 		t.Run("File acl", func(t *testing.T) {
 			assert.NoError(t, err)
-			assert.Equal(t, out[0].ID, 0)
-			assert.Equal(t, out[0].Type, "file")
-			assert.Equal(t, out[0].SourceFile, "t-data/blacklist.lst")
+			assert.Equal(t, 0, out[0].ID)
+			assert.Equal(t, "file", out[0].Type)
+			assert.Equal(t, "t-data/blacklist.lst", out[0].SourceFile)
 		})
 		t.Run("Inline acl", func(t *testing.T) {
 			assert.NoError(t, err)
-			assert.Equal(t, out[1].ID, 1)
-			assert.Equal(t, out[1].Type, "path_beg")
-			assert.Equal(t, out[1].Line, 19)
+			assert.Equal(t, 1, out[1].ID)
+			assert.Equal(t, "path_beg", out[1].Type)
+			assert.Equal(t, 18, out[1].Line)
 		})
 		t.Run("ACL by file name", func(t *testing.T) {
 			out, err := c.ListACLFiles()
