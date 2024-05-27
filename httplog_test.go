@@ -113,7 +113,8 @@ func TestBulkLog(t *testing.T) {
 		s := scanner.Text()
 		tName := fmt.Sprintf("Batch: Line %d", int(i))
 		out, err := DecodeHTTPLog(s)
-		t.Run(tName+":"+s, func(t *testing.T) {
+		t.Run(fmt.Sprintf("%s: line: %d", tName, i), func(t *testing.T) {
+			t.Log(s)
 			assert.NoError(t, err)
 			assert.Greater(t, out.TS, int64(1437153662000))
 			assert.NotEqual(t, out.StatusCode, 0)
