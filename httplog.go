@@ -17,7 +17,7 @@ var HaproxyLogTimezone = time.Local
 
 // Haproxy log line regexp (shitty go fmt doesnt allow for breaking line ;/)
 var haproxyRegex = regexp.MustCompile(
-	`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)(|[\~]) (.+?)\/(.+?) ([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+) ([\-\d]+) ([\-\d]+) (\S+) (\S+) (\S)(\S)(\S)(\S) ([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+) ([\-\d]+)\/([\-\d]+)(| \{.*\}) (".*)([\n|\s]*?)$`)
+	`.*haproxy\[(\d+)]: (.+?):(\d+) \[(.+?)\] (.+?)(|[\~]) (.+?)\/(.+?) ([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+) ([\-\d]+) ([\-\d]+) (\S+) (\S+) (\S{4}) ([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+)\/([\-\d]+) ([\-\d]+)\/([\-\d]+)(| \{.*\}) (".*)([\n|\s]*?)$`)
 var reqPathRegex = regexp.MustCompile(`"(\S+) (\S+) (\S+)"`)
 var reqTooLongPathRegex = regexp.MustCompile(`"(\S+) (\S+)`)
 
@@ -126,19 +126,19 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 	r.CapturedRequestCookie = matches[16]
 	r.CapturedResponseCookie = matches[17]
 	r.TerminationReason = rune(matches[18][0])
-	r.SessionCloseState = rune(matches[19][0])
-	r.ClientPersistenceState = rune(matches[20][0])
-	r.PersistenceCookieState = rune(matches[21][0])
-	r.CapturedSamples = matches[29]
-	if matches[30] == `"<BADREQ>"` {
+	r.SessionCloseState = rune(matches[18][1])
+	r.ClientPersistenceState = rune(matches[18][2])
+	r.PersistenceCookieState = rune(matches[18][3])
+	r.CapturedSamples = matches[26]
+	if matches[27] == `"<BADREQ>"` {
 		r.RequestMethod = "ERR"
 		r.RequestPath = "<BADREQ>"
 		r.HTTPVersion = "HTTP/0.0"
 		r.BadReq = true
-	} else if strings.HasSuffix(matches[30], `"`) {
-		submatches := reqPathRegex.FindStringSubmatch(matches[30])
+	} else if strings.HasSuffix(matches[27], `"`) {
+		submatches := reqPathRegex.FindStringSubmatch(matches[27])
 		if len(submatches) < 4 {
-			return r, errors.New(fmt.Sprintf("Not enough matches in subfield [%s]", matches[30]))
+			return r, errors.New(fmt.Sprintf("Not enough matches in subfield [%s]", matches[27]))
 		}
 		r.RequestMethod = submatches[1]
 		r.RequestPath = submatches[2]
@@ -146,7 +146,7 @@ func DecodeHTTPLog(s string) (HTTPRequest, error) {
 
 	} else {
 		// no ending " means request got truncated, just try to do what you can
-		submatches := reqTooLongPathRegex.FindStringSubmatch(matches[30])
+		submatches := reqTooLongPathRegex.FindStringSubmatch(matches[27])
 		r.RequestMethod = submatches[1]
 		r.RequestPath = submatches[2]
 		// pretend to know version, it probably got truncated with "
